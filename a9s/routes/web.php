@@ -30,7 +30,20 @@ Route::prefix("stok/api")->group(function(){
     Route::get('/check_user', [\App\Http\Controllers\User\UserAccount::class, 'checkUser']);
     Route::get('/profile', [\App\Http\Controllers\User\UserAccount::class, 'dataUser']);
     Route::put('/update_profile', [\App\Http\Controllers\User\UserAccount::class, 'updateUser']);
-  
+
+    Route::get('/units', [\App\Http\Controllers\Stok\UnitController::class, 'index']);
+    Route::get('/unit', [\App\Http\Controllers\Stok\UnitController::class, 'show']);
+    Route::post('/unit', [\App\Http\Controllers\Stok\UnitController::class, 'store']);
+    Route::put('/unit', [\App\Http\Controllers\Stok\UnitController::class, 'update']);
+    Route::delete('/unit', [\App\Http\Controllers\Stok\UnitController::class, 'delete']);
+
+    Route::get('/warehouses', [\App\Http\Controllers\Stok\WarehouseController::class, 'index']);
+    Route::get('/warehouse', [\App\Http\Controllers\Stok\WarehouseController::class, 'show']);
+    Route::post('/warehouse', [\App\Http\Controllers\Stok\WarehouseController::class, 'store']);
+    Route::put('/warehouse', [\App\Http\Controllers\Stok\WarehouseController::class, 'update']);
+    Route::delete('/warehouse', [\App\Http\Controllers\Stok\WarehouseController::class, 'delete']);
+
+    
     // Route::get('/users', [\App\Http\Controllers\Internal\User\UserController::class, 'index']);
     // Route::get('/user', [\App\Http\Controllers\Internal\User\UserController::class, 'show']);
     // Route::post('/user', [\App\Http\Controllers\Internal\User\UserController::class, 'store']);

@@ -27,6 +27,18 @@ class MyAdmin
     return $model_query;
   }
 
+  public static function checkRole($role, $allowed_roles = [], $msg = "Forbidden", $return = false)
+  {
+    $has_value = in_array($role,$allowed_roles);
+    if ($return) {
+      return $has_value;
+    }
+
+    if ($has_value == 0) {
+      throw new MyException(["message" => $msg], 403);
+    }
+  }
+
 
   public static function checkScope($user, $allowed_scopes = [], $msg = "Forbidden", $return = false)
   {

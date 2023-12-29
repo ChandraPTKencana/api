@@ -174,8 +174,8 @@ class UserAccount extends Controller
       'username' => 'required|max:50',
       'fullname' => 'required|max:50',
       'email' => 'nullable|email|max:50',
-      'phone_number' => 'required|max:13',
-      // 'photo' => 'required|max:100',
+      'phone_number' => 'nullable|max:13',
+      'photo' => 'nullable|image|mimes:jpeg,png|max:2048',
     ];
 
     $rule = [
@@ -191,6 +191,10 @@ class UserAccount extends Controller
 
       'phone_number.required' => 'Telepon tidak boleh kosong',
       'phone_number.max' => 'Telepon tidak boleh lebih dari 13 karakter',
+
+      'photo.image' => 'Jenis Foto Harus Berupa Gambar',
+      'photo.mimes' => 'Tipe Foto harus jpeg ataupun png',
+      'photo.max' => 'Foto Maksimal 2048kb',
     ];
 
     $validator = Validator::make($request->all(), $rules, $rule);
