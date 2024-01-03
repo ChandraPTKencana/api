@@ -63,8 +63,9 @@ class UnitController extends Controller
     //======================================================================================================
     $model_query = Unit::offset($offset)->limit($limit);
 
-    if (isset($request->firstRow_created_at)) {
-      $data = $data->where("created_at","<=",$request->firstRow_created_at);
+    $first_row=[];
+    if($request->first_row){
+      $first_row 	= json_decode($request->first_row, true);
     }
     //======================================================================================================
     // Model Sorting | Example $request->sort = "username:desc,role:desc";
@@ -77,15 +78,29 @@ class UnitController extends Controller
       foreach ($sorts as $key => $sort) {
         $side = explode(":", $sort);
         $side[1] = isset($side[1]) ? $side[1] : 'ASC';
+        $sort_symbol = $side[1] == "desc" ? "<=" : ">=";
         $sort_lists[$side[0]] = $side[1];
       }
 
       if (isset($sort_lists["name"])) {
         $model_query = $model_query->orderBy("name", $sort_lists["name"]);
+        if (count($first_row) > 0) {
+          $model_query = $model_query->where("name",$sort_symbol,$first_row["name"]);
+        }
       }
 
       if (isset($sort_lists["id"])) {
         $model_query = $model_query->orderBy("id", $sort_lists["id"]);
+        if (count($first_row) > 0) {
+          $model_query = $model_query->where("id",$sort_symbol,$first_row["id"]);
+        }
+      }
+
+      if (isset($sort_lists["created_at"])) {
+        $model_query = $model_query->orderBy("created_at", $sort_lists["created_at"]);
+        if (count($first_row) > 0) {
+          $model_query = $model_query->where("created_at",$sort_symbol,$first_row["created_at"]);
+        }
       }
 
       // if (isset($sort_lists["fullname"])) {
@@ -112,20 +127,26 @@ class UnitController extends Controller
         $like_lists[$side[0]] = $side[1];
       }
 
-      if (isset($like_lists["name"])) {
-        $model_query = $model_query->orWhere("name", "ilike", $like_lists["name"]);
-      }
+      if(count($like_lists) > 0){
+        $model_query = $model_query->where(function ($q)use($like_lists){
+          
+          if (isset($like_lists["name"])) {
+            $q->orWhere("name", "like", $like_lists["name"]);
+          }
+    
+          if (isset($like_lists["id"])) {
+            $q->orWhere("id", "like", $like_lists["id"]);
+          }
 
-      if (isset($like_lists["id"])) {
-        $model_query = $model_query->orWhere("id", "ilike", $like_lists["id"]);
+        });        
       }
 
       // if (isset($like_lists["fullname"])) {
-      //   $model_query = $model_query->orWhere("fullname", "ilike", $like_lists["fullname"]);
+      //   $model_query = $model_query->orWhere("fullname", "like", $like_lists["fullname"]);
       // }
 
       // if (isset($like_lists["role"])) {
-      //   $model_query = $model_query->orWhere("role", "ilike", $like_lists["role"]);
+      //   $model_query = $model_query->orWhere("role", "like", $like_lists["role"]);
       // }
     }
 
@@ -135,16 +156,16 @@ class UnitController extends Controller
 
 
     if (isset($request->id)) {
-      $model_query = $model_query->where("id", 'ilike', '%' . $request->id . '%');
+      $model_query = $model_query->where("id", 'like', '%' . $request->id . '%');
     }
     if (isset($request->name)) {
-      $model_query = $model_query->where("name", 'ilike', '%' . $request->name . '%');
+      $model_query = $model_query->where("name", 'like', '%' . $request->name . '%');
     }
     // if (isset($request->fullname)) {
-    //   $model_query = $model_query->where("fullname", 'ilike', '%' . $request->fullname . '%');
+    //   $model_query = $model_query->where("fullname", 'like', '%' . $request->fullname . '%');
     // }
     // if (isset($request->role)) {
-    //   $model_query = $model_query->where("role", 'ilike', '%' . $request->role . '%');
+    //   $model_query = $model_query->where("role", 'like', '%' . $request->role . '%');
     // }
 
     $model_query = $model_query->with(['creator', 'updator'])->get();

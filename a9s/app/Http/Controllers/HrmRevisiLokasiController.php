@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Internal\User;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -8,29 +8,37 @@ use Illuminate\Http\Request;
 use App\Helpers\MyLib;
 use App\Exceptions\MyException;
 use Illuminate\Validation\ValidationException;
-use App\Model\Internal\User;
-use App\Http\Resources\Internal\UserResource;
-use App\Http\Requests\Internal\UserRequest;
-
+use App\Models\HrmRevisiLokasi;
+use App\Helpers\MyAdmin;
+// use App\Http\Requests\Stok\HrmRevisiLokasiRequest;
+use App\Http\Resources\HrmRevisiLokasiResource;
+use Exception;
 use Illuminate\Support\Facades\DB;
+use Image;
+use File;
 
-class UserController extends Controller
+class HrmRevisiLokasiController extends Controller
 {
-  private $auth;
+  private $admin;
+  private $role;
+  private $admin_id;
+
   public function __construct(Request $request)
   {
-    $this->auth = \App\Helpers\MyAdmin::user();
+    $this->admin = MyAdmin::user();
+    $this->role = $this->admin->the_user->hak_akses;
+    $this->admin_id = $this->admin->the_user->id_user;
   }
 
   public function index(Request $request)
   {
-    \App\Helpers\MyAdmin::checkScope($this->auth, ['ap-user-view']);
+    MyAdmin::checkRole($this->role, ['User']);
 
     //======================================================================================================
     // Pembatasan Data hanya memerlukan limit dan offset
     //======================================================================================================
 
-    $limit = 250; // Limit +> Much Data
+    $limit = 15; // Limit +> Much Data
     if (isset($request->limit)) {
       if ($request->limit <= 250) {
         $limit = $request->limit;
@@ -53,7 +61,13 @@ class UserController extends Controller
     //======================================================================================================
     // Init Model
     //======================================================================================================
-    $model_query = User::offset($offset)->limit($limit);
+    $model_query = HrmRevisiLokasi::offset($offset)->limit($limit);
+    
+    $first_row=[];
+    if($request->first_row){
+      $first_row 	= json_decode($request->first_row, true);
+    }
+   
 
     //======================================================================================================
     // Model Sorting | Example $request->sort = "username:desc,role:desc";
@@ -66,39 +80,36 @@ class UserController extends Controller
       foreach ($sorts as $key => $sort) {
         $side = explode(":", $sort);
         $side[1] = isset($side[1]) ? $side[1] : 'ASC';
+        $sort_symbol = $side[1] == "desc" ? "<=" : ">=";
         $sort_lists[$side[0]] = $side[1];
       }
 
-      if (isset($sort_lists["email"])) {
-        $model_query = $model_query->orderBy("email", $sort_lists["email"]);
+      if (isset($sort_lists["name"])) {
+        $model_query = $model_query->orderBy("lokasi", $sort_lists["name"]);
+        if (count($first_row) > 0) {
+          $model_query = $model_query->where("lokasi",$sort_symbol,$first_row["name"]);
+        }
       }
 
       if (isset($sort_lists["id"])) {
         $model_query = $model_query->orderBy("id", $sort_lists["id"]);
+        if (count($first_row) > 0) {
+          $model_query = $model_query->where("id",$sort_symbol,$first_row["id"]);
+        }
       }
 
-      if (isset($sort_lists["internal_created_at"])) {
-        $model_query = $model_query->orderBy("internal_created_at", $sort_lists["internal_created_at"]);
+      if (isset($sort_lists["created_at"])) {
+        $model_query = $model_query->orderBy("created_date", $sort_lists["created_at"]);
+        if (count($first_row) > 0) {
+          $model_query = $model_query->where("created_date",$sort_symbol,$first_row["created_at"]);
+        }
       }
-
 
       // if (isset($sort_lists["role"])) {
-      //   $model_query = $model_query->orderBy(function($q){
-      //     $q->from("internal.roles")
-      //     ->select("name")
-      //     ->whereColumn("id","auths.role_id");
-      //   },$sort_lists["role"]);
-      // }
-
-      // if (isset($sort_lists["auth"])) {
-      //   $model_query = $model_query->orderBy(function($q){
-      //     $q->from("users as u")
-      //     ->select("u.username")
-      //     ->whereColumn("u.id","users.id");
-      //   },$sort_lists["auth"]);
+      //   $model_query = $model_query->orderBy("role", $sort_lists["role"]);
       // }
     } else {
-      $model_query = $model_query->orderBy('id', 'ASC');
+      $model_query = $model_query->orderBy('id', 'DESC');
     }
     //======================================================================================================
     // Model Filter | Example $request->like = "username:%username,role:%role%,name:role%,";
@@ -114,12 +125,26 @@ class UserController extends Controller
         $like_lists[$side[0]] = $side[1];
       }
 
-      if (isset($like_lists["email"])) {
-        $model_query = $model_query->orWhere("email", "like", $like_lists["email"]);
+      if(count($like_lists) > 0){
+        $model_query = $model_query->where(function ($q)use($like_lists){
+          
+          if (isset($like_lists["name"])) {
+            $q->orWhere("lokasi", "like", $like_lists["name"]);
+          }
+    
+          if (isset($like_lists["id"])) {
+            $q->orWhere("id", "like", $like_lists["id"]);
+          }
+
+        });        
       }
 
+      // if (isset($like_lists["fullname"])) {
+      //   $model_query = $model_query->orWhere("fullname", "like", $like_lists["fullname"]);
+      // }
+
       // if (isset($like_lists["role"])) {
-      //   $model_query = $model_query->orWhere("role","like",$like_lists["role"]);
+      //   $model_query = $model_query->orWhere("role", "like", $like_lists["role"]);
       // }
     }
 
@@ -127,19 +152,28 @@ class UserController extends Controller
     // Model Filter
     // ==============
 
-    if (isset($request->username)) {
-      $model_query = $model_query->where("username", 'like', '%' . $request->username . '%');
-    }
 
+    if (isset($request->id)) {
+      $model_query = $model_query->where("id", 'like', '%' . $request->id . '%');
+    }
     if (isset($request->name)) {
-      $model_query = $model_query->where("name", 'like', '%' . $request->name . '%');
+      $model_query = $model_query->where("lokasi", 'like', '%' . $request->name . '%');
     }
-
+    // if (isset($request->fullname)) {
+    //   $model_query = $model_query->where("fullname", 'like', '%' . $request->fullname . '%');
+    // }
+    // if (isset($request->role)) {
+    //   $model_query = $model_query->where("role", 'like', '%' . $request->role . '%');
+    // }
+    // return response()->json([
+    //   // "data"=>EmployeeResource::collection($employees->keyBy->id),
+    //   $model_query->toSql(),
+    // ], 400);
     $model_query = $model_query->get();
 
     return response()->json([
       // "data"=>EmployeeResource::collection($employees->keyBy->id),
-      "data" => UserResource::collection($model_query),
+      "data" => HrmRevisiLokasiResource::collection($model_query),
     ], 200);
   }
 
@@ -181,50 +215,32 @@ class UserController extends Controller
   //   ],200);
 
   // }
-  public function show(UserRequest $request)
+  public function show(HrmRevisiLokasiRequest $request)
   {
-    MyLib::checkScope($this->auth, ['ap-user-view']);
+    // MyLib::checkScope($this->auth, ['ap-member-view']);
 
-    $model_query = User::find($request->id);
+    $model_query = HrmRevisiLokasi::with(['creator', 'updator'])->find($request->id);
     return response()->json([
-      "data" => new UserResource($model_query),
+      "data" => new HrmRevisiLokasiResource($model_query),
     ], 200);
   }
 
-  public function store(UserRequest $request)
+  public function store(HrmRevisiLokasiRequest $request)
   {
-    MyLib::checkScope($this->auth, ['ap-user-add']);
+    MyAdmin::checkRole($this->role, ['User']);
+
+    $name = $request->name;
 
     DB::beginTransaction();
-
     try {
-      $model_query             = new User();
-      $model_query->email      = trim($request->email);
-      if ($request->password) {
-        $model_query->password = bcrypt($request->password);
-      }
-      // $model_query->employee_no = $request->employee_no;
-      $model_query->fullname   = $request->fullname;
-      $model_query->role       = $request->role;
-      $model_query->can_login  = $request->can_login;
-      $model_query->internal_created_at = MyLib::manualMillis(date("Y-m-d H:i:s"));
-      $model_query->internal_created_by = $this->auth->id;
-      $model_query->internal_updated_at = MyLib::manualMillis(date("Y-m-d H:i:s"));
-      $model_query->internal_updated_by = $this->auth->id;
+
+      $model_query             = new HrmRevisiLokasi();
+      $model_query->name       = $request->name;
+      $model_query->created_at = date("Y-m-d H:i:s");
+      $model_query->created_by = $this->admin_id;
+      $model_query->updated_at = date("Y-m-d H:i:s");
+      $model_query->updated_by = $this->admin_id;
       $model_query->save();
-      // if($request->employee_no){
-      //   $employee = Employee::where("no",$request->employee_no)->first();
-      //   if(!$employee){
-      //     throw new \Exception("Pegawai tidak terdaftar",1);
-      //   }
-
-      //   if($employee->which_user_id !== null){
-      //     throw new \Exception("Pegawai tidak tersedia",1);
-      //   }
-
-      //   Employee::where("no",$request->employee_no)->update(["which_user_id"=>$model_query->id]);
-
-      // }
 
       DB::commit();
       return response()->json([
@@ -239,62 +255,25 @@ class UserController extends Controller
         ], 400);
       }
 
-      // return response()->json([
-      //   "message"=>$e->getMessage(),
-      // ],400);
-
       return response()->json([
-        "message" => "Proses tambah data gagal"
+        "message" => "Proses tambah data gagal",
+        // "message" => $e->getMessage(),
+
       ], 400);
     }
   }
 
-  public function update(UserRequest $request)
+  public function update(HrmRevisiLokasiRequest $request)
   {
-    MyLib::checkScope($this->auth, ['ap-user-edit']);
+    MyAdmin::checkRole($this->role, ['User']);
 
     DB::beginTransaction();
     try {
-      $model_query              = User::find($request->id);
-      $model_query->email       = trim($request->email);
-      if ($request->password) {
-        $model_query->password  = bcrypt($request->password);
-      }
-      $model_query->fullname    = $request->fullname;
-      $model_query->role        = $request->role;
-      // $model_query->employee_no = $request->employee_no;
-      $model_query->can_login   = $request->can_login;
-      $model_query->internal_updated_at  = MyLib::manualMillis(date("Y-m-d H:i:s"));
-      $model_query->internal_updated_by  = $this->auth->id;
+      $model_query             = HrmRevisiLokasi::find($request->id);
+      $model_query->name       = $request->name;
+      $model_query->updated_at = date("Y-m-d H:i:s");
+      $model_query->updated_by = $this->admin_id;
       $model_query->save();
-
-
-      // if($request->employee_no){
-      //   //Check apakah di update dengan data yang sama
-      //   $employee = Employee::where("no",$request->employee_no)->where("which_user_id",$request->id)->first();
-      //   // jika berbeda
-      //   if(!$employee){
-      //     //check used employee and set null
-      //     $employee = Employee::where("which_user_id",$request->id)->first();
-      //     if($employee)
-      //     Employee::where("which_user_id",$request->id)->update(["which_user_id"=>null]);
-
-      //     //add used employee
-      //     $employee = Employee::where("no",$request->employee_no)->first();
-      //     if(!$employee){
-      //       throw new \Exception("Karyawan tidak terdaftar",1);
-      //     }
-      //     if($employee->which_user_id !== null){
-      //       throw new \Exception("Karyawan tidak tersedia",1);
-      //     }
-      //     Employee::where("no",$request->employee_no)->update(["which_user_id"=>$request->id]);
-      //   }
-      // }else{
-      //   $employee = Employee::where("which_user_id",$request->id)->first();
-      //   if($employee){
-      //     Employee::where("which_user_id",$request->id)->update(["which_user_id"=>null]);
-      //   }
-      // }
 
       DB::commit();
       return response()->json([
@@ -308,6 +287,7 @@ class UserController extends Controller
         ], 400);
       }
       return response()->json([
+        // "line" => $e->getLine(),
         "message" => $e->getMessage(),
       ], 400);
       return response()->json([
@@ -316,16 +296,14 @@ class UserController extends Controller
     }
   }
 
-
-  public function delete(UserRequest $request)
+  public function delete(HrmRevisiLokasiRequest $request)
   {
-    MyLib::checkScope($this->auth, ['ap-user-remove']);
+    MyAdmin::checkRole($this->role, ['User']);
 
     DB::beginTransaction();
 
     try {
-
-      $model_query = User::find($request->id);
+      $model_query = HrmRevisiLokasi::find($request->id);
       if (!$model_query) {
         throw new \Exception("Data tidak terdaftar", 1);
       }
@@ -353,14 +331,5 @@ class UserController extends Controller
       ], 400);
       //throw $th;
     }
-    // if ($model_query->delete()) {
-    //     return response()->json([
-    //         "message"=>"Proses ubah data berhasil",
-    //     ],200);
-    // }
-
-    // return response()->json([
-    //     "message"=>"Proses ubah data gagal",
-    // ],400);
   }
 }

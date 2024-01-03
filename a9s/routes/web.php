@@ -49,6 +49,13 @@ Route::prefix("stok/api")->group(function(){
     Route::put('/item', [\App\Http\Controllers\Stok\ItemController::class, 'update']);
     Route::delete('/item', [\App\Http\Controllers\Stok\ItemController::class, 'delete']);
 
+    Route::get('/transactions', [\App\Http\Controllers\Stok\TransactionController::class, 'index']);
+    Route::get('/transaction', [\App\Http\Controllers\Stok\TransactionController::class, 'show']);
+    Route::post('/transaction', [\App\Http\Controllers\Stok\TransactionController::class, 'store']);
+    Route::put('/transaction', [\App\Http\Controllers\Stok\TransactionController::class, 'update']);
+    Route::delete('/transaction', [\App\Http\Controllers\Stok\TransactionController::class, 'delete']);
+
+    Route::get('/hrm_revisi_lokasis', [\App\Http\Controllers\HrmRevisiLokasiController::class, 'index']);
     
     // Route::get('/users', [\App\Http\Controllers\Internal\User\UserController::class, 'index']);
     // Route::get('/user', [\App\Http\Controllers\Internal\User\UserController::class, 'show']);

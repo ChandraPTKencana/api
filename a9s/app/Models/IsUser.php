@@ -58,8 +58,10 @@ class IsUser extends Authenticatable
         return $token;
     }
 
-    function hrm_revisi_lokasi()
+    public function hrm_revisi_lokasis()
     {
-        return $this->belongsTo(HrmRevisiLokasi::class, 'loc', 'id');
+        $locs=explode(",",$this->loc);
+        return $this->from("hrm_revisi_lokasi")->select('*')->whereIn("id",$locs)->get()->toArray();
+        // return $this->belongsTo(HrmRevisiLokasi::class, 'loc', 'id');
     }
 }

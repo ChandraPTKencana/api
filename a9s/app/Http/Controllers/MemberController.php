@@ -104,19 +104,19 @@ class MemberController extends Controller
       }
 
       if (isset($like_lists["username"])) {
-        $model_query = $model_query->orWhere("username", "ilike", $like_lists["username"]);
+        $model_query = $model_query->orWhere("username", "like", $like_lists["username"]);
       }
 
       if (isset($like_lists["email"])) {
-        $model_query = $model_query->orWhere("email", "ilike", $like_lists["email"]);
+        $model_query = $model_query->orWhere("email", "like", $like_lists["email"]);
       }
 
       if (isset($like_lists["fullname"])) {
-        $model_query = $model_query->orWhere("fullname", "ilike", $like_lists["fullname"]);
+        $model_query = $model_query->orWhere("fullname", "like", $like_lists["fullname"]);
       }
 
       // if (isset($like_lists["role"])) {
-      //   $model_query = $model_query->orWhere("role", "ilike", $like_lists["role"]);
+      //   $model_query = $model_query->orWhere("role", "like", $like_lists["role"]);
       // }
     }
 
@@ -126,16 +126,16 @@ class MemberController extends Controller
 
 
     if (isset($request->username)) {
-      $model_query = $model_query->where("username", 'ilike', '%' . $request->username . '%');
+      $model_query = $model_query->where("username", 'like', '%' . $request->username . '%');
     }
     if (isset($request->email)) {
-      $model_query = $model_query->where("email", 'ilike', '%' . $request->email . '%');
+      $model_query = $model_query->where("email", 'like', '%' . $request->email . '%');
     }
     if (isset($request->fullname)) {
-      $model_query = $model_query->where("fullname", 'ilike', '%' . $request->fullname . '%');
+      $model_query = $model_query->where("fullname", 'like', '%' . $request->fullname . '%');
     }
     // if (isset($request->role)) {
-    //   $model_query = $model_query->where("role", 'ilike', '%' . $request->role . '%');
+    //   $model_query = $model_query->where("role", 'like', '%' . $request->role . '%');
     // }
 
     $model_query = $model_query->with(['internal_creator', 'internal_updator'])->get();

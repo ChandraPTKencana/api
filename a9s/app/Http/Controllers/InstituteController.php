@@ -102,15 +102,15 @@ class InstituteController extends Controller
       }
 
       if (isset($like_lists["name"])) {
-        $model_query = $model_query->orWhere("name", "ilike", $like_lists["name"]);
+        $model_query = $model_query->orWhere("name", "like", $like_lists["name"]);
       }
 
       if (isset($like_lists["contact_number"])) {
-        $model_query = $model_query->orWhere("contact_number", "ilike", $like_lists["contact_number"]);
+        $model_query = $model_query->orWhere("contact_number", "like", $like_lists["contact_number"]);
       }
 
       if (isset($like_lists["contact_person"])) {
-        $model_query = $model_query->orWhere("contact_person", "ilike", $like_lists["contact_person"]);
+        $model_query = $model_query->orWhere("contact_person", "like", $like_lists["contact_person"]);
       }
     }
 
@@ -120,13 +120,13 @@ class InstituteController extends Controller
 
 
     if (isset($request->name)) {
-      $model_query = $model_query->where("name", 'ilike', '%' . $request->name . '%');
+      $model_query = $model_query->where("name", 'like', '%' . $request->name . '%');
     }
     if (isset($request->contact_number)) {
-      $model_query = $model_query->where("contact_number", 'ilike', '%' . $request->contact_number . '%');
+      $model_query = $model_query->where("contact_number", 'like', '%' . $request->contact_number . '%');
     }
     if (isset($request->contact_person)) {
-      $model_query = $model_query->where("contact_person", 'ilike', '%' . $request->contact_person . '%');
+      $model_query = $model_query->where("contact_person", 'like', '%' . $request->contact_person . '%');
     }
 
     $model_query = $model_query->with('internal_marketer')->get();

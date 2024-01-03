@@ -40,6 +40,15 @@ class MyAdmin
   }
 
 
+  public static function checkReturnOrFailLocation($user,$loc, $msg = "Forbidden")
+  {
+    $has_value = in_array($loc,$user->hrm_revisi_lokasis());
+    if ($has_value == 0) {
+      throw new MyException(["message" => $msg], 403);
+    }
+    return $loc;
+  }
+
   public static function checkScope($user, $allowed_scopes = [], $msg = "Forbidden", $return = false)
   {
     $scopes = $user->listPermissions();
