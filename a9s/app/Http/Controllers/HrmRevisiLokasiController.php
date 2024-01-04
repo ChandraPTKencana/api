@@ -32,13 +32,13 @@ class HrmRevisiLokasiController extends Controller
 
   public function index(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['User']);
+    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
 
     //======================================================================================================
     // Pembatasan Data hanya memerlukan limit dan offset
     //======================================================================================================
 
-    $limit = 15; // Limit +> Much Data
+    $limit = 30; // Limit +> Much Data
     if (isset($request->limit)) {
       if ($request->limit <= 250) {
         $limit = $request->limit;
@@ -169,6 +169,14 @@ class HrmRevisiLokasiController extends Controller
     //   // "data"=>EmployeeResource::collection($employees->keyBy->id),
     //   $model_query->toSql(),
     // ], 400);
+    if($request->exclude){
+      $model_query = $model_query->where("id","!=",$request->exclude);
+    }
+
+    if($request->opt=="from" && $this->role=='ClientPabrik'){
+      $model_query = $model_query->whereIn("id",$this->admin->the_user->hrm_revisi_lokasis());
+    }
+  
     $model_query = $model_query->get();
 
     return response()->json([

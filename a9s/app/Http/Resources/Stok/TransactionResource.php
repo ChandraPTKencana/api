@@ -31,9 +31,9 @@ class TransactionResource extends JsonResource
             'type'              => $this->type,
 
             'requested_at'      => $this->requested_at,
-            'approved_at'       => $this->approved_at,
+            'confirmed_at'       => $this->confirmed_at,
             'requester'         => new IsUserResource($this->whenLoaded('requester')),
-            'approver'          => new IsUserResource($this->whenLoaded('approver')),
+            'confirmer'          => new IsUserResource($this->whenLoaded('confirmer')),
             'created_at'        => $this->created_at,
             'updated_at'        => $this->updated_at,
             'ref_id'            => $this->ref_id,

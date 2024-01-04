@@ -28,8 +28,8 @@ class TransactionRequest extends FormRequest
             // $rules['name'] = 'required|max:255|unique:App\Models\Stok\Item,name';
             $rules['warehouse_id'] = 'required|exists:App\Models\HrmRevisiLokasi,id';
             $rules['item_id'] = 'required|exists:App\Models\Stok\Item,id';
-            $rules['qty_in'] = 'required_if:qty_out,null|nullable|numeric';
-            $rules['qty_out'] = 'required_if:qty_in,null|nullable|numeric';
+            $rules['qty_in'] = 'required_if:qty_out,|nullable|numeric';
+            $rules['qty_out'] = 'required_if:qty_in,|nullable|numeric';
             $rules['type'] = 'required|in:transfer,used,in';
             $rules['warehouse_target_id'] = 'required_if:type,transfer|nullable|exists:App\Models\HrmRevisiLokasi,id';
     }
@@ -58,9 +58,12 @@ class TransactionRequest extends FormRequest
 
             'qty_in.required_if' => 'Qty Tidak boleh kosong',
             'qty_in.numeric' => 'Qty harus angka',
+            'qty_in.min' => 'Qty minimal 1',
 
             'qty_out.required_if' => 'Qty Tidak boleh kosong',
             'qty_out.numeric' => 'Qty harus angka',
+            'qty_out.min' => 'Qty minimal 1',
+
 
             'type.required' => 'Type Tidak boleh kosong',
             'type.in' => 'Format Type salah',

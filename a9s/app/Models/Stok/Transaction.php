@@ -10,6 +10,7 @@ class Transaction extends Model
     use HasFactory;
 
     protected $table = 'st_transactions';  
+    public $timestamps = false;
 
     public function warehouse()
     {
@@ -36,8 +37,8 @@ class Transaction extends Model
         return $this->hasOne(\App\Models\IsUser::class, 'id_user', "requested_by");
     }
 
-    public function approver()
+    public function confirmer()
     {
-        return $this->hasOne(\App\Models\IsUser::class, 'id_user', "approved_by");
+        return $this->hasOne(\App\Models\IsUser::class, 'id_user', "confirmed_by");
     }
 }
