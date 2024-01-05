@@ -242,12 +242,22 @@ class TransactionController extends Controller
 
   public function show(TransactionRequest $request)
   {
-    // MyLib::checkScope($this->auth, ['ap-member-view']);
+    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+
 
     $model_query = Transaction::with(['warehouse','warehouse_source','warehouse_target','requester', 'confirmer',
     'item'=>function($q){
       $q->with('unit');      
     }])->find($request->id);
+
+    if($this->role=='ClientPabrik')
+    MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);
+
+    if($model_query->ref_id!=null){
+      return response()->json([
+        "message" => "Ubah data ditolak",
+      ], 400);
+    }
 
     return response()->json([
       "data" => new TransactionResource($model_query),
@@ -273,7 +283,6 @@ class TransactionController extends Controller
       $warehouse_id = MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$request->warehouse_id);
       
       $model_query->hrm_revisi_lokasi_id        = $warehouse_id;
-      
       $model_query->st_item_id                  = $request->item_id;
       $model_query->note                        = MyLib::emptyStrToNull($request->note);
 
@@ -319,13 +328,7 @@ class TransactionController extends Controller
 
 
       $qty_reminder = 0;
-      $dt_before = Transaction::where('hrm_revisi_lokasi_id',$warehouse_id)
-      ->where('st_item_id',$request->item_id)
-      ->whereNotNull('confirmed_by')
-      ->orderBy("updated_at","desc")
-      ->orderBy("ref_id","desc")
-      ->lockForUpdate()->first();
-      
+      $dt_before = $this->getLastDataConfirmed($warehouse_id,$request->item_id);
       if($dt_before)
       $qty_reminder = $dt_before->qty_reminder;
       else{
@@ -393,78 +396,221 @@ class TransactionController extends Controller
     }
   }
 
-  // public function update(TransactionRequest $request)
-  // {
-  //   MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+  public function update(TransactionRequest $request)
+  {
+    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
 
-  //   DB::beginTransaction();
-  //   try {
-  //     $model_query             = Transaction::find($request->id);
-  //     $model_query->name       = $request->name;
-  //     $model_query->value      = MyLib::emptyStrToNull($request->value);
-  //     $model_query->note       = MyLib::emptyStrToNull($request->note);
-  //     $model_query->st_unit_id = MyLib::emptyStrToNull($request->unit_id);
-  //     $model_query->updated_at = date("Y-m-d H:i:s");
-  //     $model_query->updated_by = $this->admin_id;
-  //     $model_query->save();
+    DB::beginTransaction();
+    try {
+      $model_query             = Transaction::where("id",$request->id)->lockForUpdate()->first();
 
-  //     DB::commit();
-  //     return response()->json([
-  //       "message" => "Proses ubah data berhasil",
-  //     ], 200);
-  //   } catch (\Exception $e) {
-  //     DB::rollback();
-  //     if ($e->getCode() == 1) {
-  //       return response()->json([
-  //         "message" => $e->getMessage(),
-  //       ], 400);
-  //     }
-  //     return response()->json([
-  //       // "line" => $e->getLine(),
-  //       "message" => $e->getMessage(),
-  //     ], 400);
-  //     return response()->json([
-  //       "message" => "Proses ubah data gagal"
-  //     ], 400);
-  //   }
-  // }
+      if($model_query->ref_id!=null){
+        throw new \Exception("Ubah data ditolak",1);
+      }
 
-  // public function delete(TransactionRequest $request)
-  // {
-  //   MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+      $warehouse_id = $request->warehouse_id;
+      if($this->role=='ClientPabrik')
+      $warehouse_id = MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);
+  
+      $dt_before = $this->getLastDataConfirmed($warehouse_id,$request->item_id);
+      if($dt_before && $dt_before->id != $model_query->id){
+        throw new \Exception("Ubah ditolak. Hanya data terbaru yang bisa diubah.",1);
+      }
 
-  //   DB::beginTransaction();
+      $type = $request->type;
+      $old_type = $model_query->type;
 
-  //   try {
-  //     $model_query = Transaction::find($request->id);
-  //     if (!$model_query) {
-  //       throw new \Exception("Data tidak terdaftar", 1);
-  //     }
-  //     $model_query->delete();
+      $mdl = "";
+      if($old_type=='transfer'){
+        $mdl = Transaction::where("ref_id",$model_query->id)->lockForUpdate()->first();
+        if($mdl->confirmed_by != null){
+          throw new \Exception("Ubah ditolak. Data pada referensi sudah di konfirmasi.",1);
+        }
+      }
 
-  //     DB::commit();
-  //     return response()->json([
-  //       "message" => "Proses ubah data berhasil",
-  //     ], 200);
-  //   } catch (\Exception  $e) {
-  //     DB::rollback();
-  //     if ($e->getCode() == "23503")
-  //       return response()->json([
-  //         "message" => "Data tidak dapat dihapus, data masih terkait dengan data yang lain nya",
-  //       ], 400);
+      if($type!=="transfer" && $old_type=='transfer'){
+        $mdl->delete();
+      }
 
-  //     if ($e->getCode() == 1) {
-  //       return response()->json([
-  //         "message" => $e->getMessage(),
-  //       ], 400);
-  //     }
+      $qty_reminder_old = $model_query->qty_reminder;
+      if($old_type=="transfer" || $old_type=="used")
+      $qty_reminder_old+=$model_query->qty_out;
+      else
+      $qty_reminder_old-=$model_query->qty_in;
 
-  //     return response()->json([
-  //       "message" => "Proses hapus data gagal",
-  //     ], 400);
-  //     //throw $th;
-  //   }
-  // }
+      $model_query->hrm_revisi_lokasi_id        = $warehouse_id;
+      $model_query->st_item_id                  = $request->item_id;
+      $model_query->note                        = MyLib::emptyStrToNull($request->note);
+      
+      $model_query->type                        = $type;
+
+      if($type=="transfer" || $type=="used"){
+        if($request->qty_out==0) {
+          throw new \Exception("Qty Tidak Boleh 0",1);
+        }
+        $model_query->qty_out                     = $request->qty_out;
+      }else{
+        if($request->qty_in==0) {
+          throw new \Exception("Qty Tidak Boleh 0",1);
+        }
+        $model_query->qty_in                      = $request->qty_in;
+      }
+  
+      $model_query->status                      = "done";
+      $warehouse_target_id = $request->warehouse_target_id;
+      if($type=="transfer"){
+        if($warehouse_id==$warehouse_target_id)
+        throw new \Exception("Warehouse tidak boleh sama",1);
+
+        $model_query->hrm_revisi_lokasi_source_id = $warehouse_id;
+        $model_query->hrm_revisi_lokasi_target_id = $warehouse_target_id;
+      }elseif($type=="used"){
+        $model_query->hrm_revisi_lokasi_source_id = $warehouse_id;
+        $model_query->hrm_revisi_lokasi_target_id = $warehouse_id;
+      }elseif($type=="in"){
+        $model_query->hrm_revisi_lokasi_source_id = null;
+        $model_query->hrm_revisi_lokasi_target_id = $warehouse_id;
+      }
+
+      $model_query->requested_at              = date("Y-m-d H:i:s");
+      $model_query->requested_by              = $this->admin_id;
+      $model_query->confirmed_at               = date("Y-m-d H:i:s");
+      $model_query->confirmed_by               = $this->admin_id;
+
+      $model_query->updated_at                = date("Y-m-d H:i:s");
+
+      
+      if($type=="in"){
+        $qty_reminder_old += $request->qty_in;
+      }else{
+
+        if($qty_reminder_old - $request->qty_out < 0){
+          throw new \Exception("Qty melebihi stok : ".$qty_reminder_old, 1);
+        }
+
+        $qty_reminder_old -= $request->qty_out;
+      }
+
+      $model_query->qty_reminder                = $qty_reminder_old;
+
+      $model_query->save();
+
+      if($type=="transfer" && $old_type=='transfer'){
+        $mdl->hrm_revisi_lokasi_id        = $request->warehouse_target_id;
+        $mdl->st_item_id                  = $request->item_id;
+        $mdl->type                        = $type;
+        $mdl->qty_in                      = $request->qty_out;
+        $mdl->status                      = "pending";
+        $mdl->hrm_revisi_lokasi_source_id  = $warehouse_id;
+        $mdl->hrm_revisi_lokasi_target_id  = $warehouse_target_id;
+        $mdl->requested_at                 = date("Y-m-d H:i:s");
+        $mdl->requested_by                 = $this->admin_id;
+        $mdl->confirmed_at                  = null;
+        $mdl->created_at                   = date("Y-m-d H:i:s");
+        $mdl->updated_at                   = date("Y-m-d H:i:s");
+        $mdl->save();
+      }elseif($type=="transfer" && $old_type!='transfer'){
+        $model_query2                         = new Transaction();
+        $model_query2->ref_id = $model_query->id;
+        $model_query2->hrm_revisi_lokasi_id        = $request->warehouse_target_id;
+        $model_query2->st_item_id                  = $request->item_id;
+        $model_query2->type                        = $type;
+        $model_query2->qty_in                      = $request->qty_out;
+        $model_query2->status                      = "pending";
+        $model_query2->hrm_revisi_lokasi_source_id  = $warehouse_id;
+        $model_query2->hrm_revisi_lokasi_target_id  = $warehouse_target_id;
+        $model_query2->requested_at                 = date("Y-m-d H:i:s");
+        $model_query2->requested_by                 = $this->admin_id;
+        $model_query2->confirmed_at                  = null;
+        $model_query2->created_at                   = date("Y-m-d H:i:s");
+        $model_query2->updated_at                   = date("Y-m-d H:i:s");
+        $model_query2->save();
+      }
+
+      DB::commit();
+      return response()->json([
+        "message" => "Proses ubah data berhasil",
+      ], 200);
+    } catch (\Exception $e) {
+      DB::rollback();
+      if ($e->getCode() == 1) {
+        return response()->json([
+          "message" => $e->getMessage(),
+        ], 400);
+      }
+      // return response()->json([
+      //   // "line" => $e->getLine(),
+      //   "message" => $e->getMessage(),
+      // ], 400);
+      return response()->json([
+        "message" => "Proses ubah data gagal"
+      ], 400);
+    }
+  }
+
+  public function delete(TransactionRequest $request)
+  {
+    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+
+    DB::beginTransaction();
+
+    try {
+      $model_query = Transaction::where("id",$request->id)->lockForUpdate()->first();
+
+      
+      if (!$model_query) {
+        throw new \Exception("Data tidak terdaftar", 1);
+      }
+
+      if($model_query->ref_id!=null){
+        throw new \Exception("Ubah data ditolak",1);
+      }
+      
+      if($this->role=='ClientPabrik')
+      MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);
+  
+      $dt_before = $this->getLastDataConfirmed($model_query->hrm_revisi_lokasi_id,$model_query->st_item_id);
+      if($dt_before && $dt_before->id != $model_query->id){
+        throw new \Exception("Hapus ditolak. Hanya data terbaru yang bisa dihapus.",1);
+      }
+
+      $type = $request->type;
+      $old_type = $model_query->type;
+
+      $mdl = "";
+      if($old_type=='transfer'){
+        $mdl = Transaction::where("ref_id",$model_query->id)->lockForUpdate()->first();
+        if($mdl->confirmed_by != null){
+          throw new \Exception("Hapus ditolak. Data pada referensi sudah di konfirmasi.",1);
+        }
+
+        $mdl->delete();
+      }
+      $model_query->delete();
+
+      DB::commit();
+      return response()->json([
+        "message" => "Proses ubah data berhasil",
+      ], 200);
+    } catch (\Exception  $e) {
+      DB::rollback();
+      if ($e->getCode() == "23503")
+        return response()->json([
+          "message" => "Data tidak dapat dihapus, data masih terkait dengan data yang lain nya",
+        ], 400);
+
+      if ($e->getCode() == 1) {
+        return response()->json([
+          "message" => $e->getMessage(),
+        ], 400);
+      }
+
+      return response()->json([
+        "message" => "Proses hapus data gagal",
+      ], 400);
+      //throw $th;
+    }
+  }
 
 
   public function request_transactions(Request $request)
@@ -704,13 +850,7 @@ class TransactionController extends Controller
 
 
       $qty_reminder = 0;
-      $dt_before = Transaction::where('hrm_revisi_lokasi_id',$warehouse_id)
-      ->where('st_item_id',$model_query->st_item_id)
-      ->whereNotNull('confirmed_by')
-      ->orderBy("updated_at","desc")
-      ->orderBy("ref_id","desc")
-      ->lockForUpdate()->first();
-      
+      $dt_before = $this->getLastDataConfirmed($warehouse_id,$model_query->st_item_id);
       if($dt_before)
       $qty_reminder = $dt_before->qty_reminder;
       
@@ -739,5 +879,107 @@ class TransactionController extends Controller
 
       ], 400);
     }
+  }
+
+  public function summary_transactions(Request $request)
+  {
+    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+
+    $model_query = new Transaction();
+    if($this->role=='ClientPabrik'){
+      $warehouse_ids = $this->admin->the_user->hrm_revisi_lokasis();
+      $model_query = $model_query->whereIn("hrm_revisi_lokasi_id",$warehouse_ids);
+    }else {
+      $warehouse_ids = \App\Models\HrmRevisiLokasi::get()->pluck("id")->toArray();
+    }
+
+    if($request->to){
+      $model_query = $model_query->where("updated_at","<=",$request->to);
+    }
+
+    $model_query = $model_query->whereNotNull("qty_reminder");
+    $model_query = $model_query->selectRaw('DISTINCT hrm_revisi_lokasi_id,st_item_id,max(updated_at)');
+    $model_query = $model_query->groupBy(['hrm_revisi_lokasi_id','st_item_id']);
+    $model_query = $model_query->get();
+
+
+//     SELECT t.user_id, t.location_id, t.qty
+// FROM tests t
+// JOIN (
+//     SELECT user_id, location_id, MAX(updated_at) AS max_updated_at
+//     FROM tests
+//     GROUP BY user_id, location_id
+// ) max_dates
+// ON t.user_id = max_dates.user_id
+//    AND t.location_id = max_dates.location_id
+//    AND t.updated_at = max_dates.max_updated_at;
+
+    return response()->json([
+      "q" => $model_query,
+    ], 400);
+
+
+    DB::beginTransaction();
+    try {
+
+      
+
+
+      $model_query                         = Transaction::find($request->id);
+      if(!$model_query)
+      throw new \Exception("Data tidak ditemukan", 1);
+
+      if($model_query->qty_reminder!=null)
+      throw new \Exception("Transaksi tidak bisa dilanjutkan karna sisa sudah terisi", 1);
+
+      $warehouse_id = $model_query->hrm_revisi_lokasi_id;
+      if($this->role=='ClientPabrik')
+      $warehouse_id = MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);      
+      $model_query->status                    = "done";
+      $model_query->confirmed_at              = date("Y-m-d H:i:s");
+      $model_query->confirmed_by              = $this->admin_id;
+      $model_query->updated_at                = date("Y-m-d H:i:s");
+
+
+      $qty_reminder = 0;
+      $dt_before = $this->getLastDataConfirmed($warehouse_id,$model_query->st_item_id);      
+      if($dt_before)
+      $qty_reminder = $dt_before->qty_reminder;
+      
+      $qty_reminder += $model_query->qty_in;
+      $model_query->qty_reminder                = $qty_reminder;
+
+      $model_query->save();
+      DB::commit();
+      return response()->json([
+        "message" => "Proses ubah data berhasil",
+      ], 200);
+    } catch (\Exception $e) {
+      DB::rollback();
+      // return response()->json([
+      //   "message" => $e->getMessage(),
+      // ], 400);
+      if ($e->getCode() == 1) {
+        return response()->json([
+          "message" => $e->getMessage(),
+        ], 400);
+      }
+
+      return response()->json([
+        "message" => "Proses ubah data gagal",
+        // "message" => $e->getMessage(),
+
+      ], 400);
+    }
+  }
+
+
+  public function getLastDataConfirmed($warehouse_id,$item_id){
+    return Transaction::where('hrm_revisi_lokasi_id',$warehouse_id)
+    ->where('st_item_id',$item_id)
+    ->whereNotNull('confirmed_by')
+    ->orderBy("updated_at","desc")
+    ->orderBy("ref_id","desc")
+    ->lockForUpdate()->first();    
   }
 }
