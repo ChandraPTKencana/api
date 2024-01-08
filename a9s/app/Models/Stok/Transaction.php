@@ -27,9 +27,9 @@ class Transaction extends Model
         return $this->belongsTo(\App\Models\HrmRevisiLokasi::class, "hrm_revisi_lokasi_target_id", 'id');
     }
 
-    public function item()
+    public function details()
     {
-        return $this->belongsTo(Item::class, "st_item_id", 'id');
+        return $this->hasMany(TransactionDetail::class, 'st_transaction_id', 'id');
     }
 
     public function requester()

@@ -168,6 +168,14 @@ class ItemController extends Controller
     //   $model_query = $model_query->where("role", 'like', '%' . $request->role . '%');
     // }
 
+    if ($request->exclude_lists) {
+      $exclude_lists = json_decode($request->exclude_lists, true);
+      if (count($exclude_lists) > 0) {
+        // $exclude_lists = array_filter($exclude_lists,function ($x){return $x != "000.00.000";});
+        $model_query = $model_query->whereNotIn("id", $exclude_lists);
+      }
+    }
+
     $model_query = $model_query->with(['creator', 'updator','unit'])->get();
 
     return response()->json([

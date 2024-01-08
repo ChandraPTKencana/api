@@ -36,9 +36,9 @@ class TransactionRequest extends FormRequest
         }
         if (request()->isMethod('post') || request()->isMethod('put')) {
             $rules['warehouse_id'] = 'required|exists:App\Models\HrmRevisiLokasi,id';
-            $rules['item_id'] = 'required|exists:App\Models\Stok\Item,id';
-            $rules['qty_in'] = 'required_if:qty_out,|nullable|numeric';
-            $rules['qty_out'] = 'required_if:qty_in,|nullable|numeric';
+            // $rules['item_id'] = 'required|exists:App\Models\Stok\Item,id';
+            // $rules['qty_in'] = 'required_if:qty_out,|nullable|numeric';
+            // $rules['qty_out'] = 'required_if:qty_in,|nullable|numeric';
             $rules['type'] = 'required|in:transfer,used,in';
             $rules['warehouse_target_id'] = 'required_if:type,transfer|nullable|exists:App\Models\HrmRevisiLokasi,id';
         }
@@ -54,16 +54,16 @@ class TransactionRequest extends FormRequest
             'id.required' => 'ID tidak boleh kosong',
             'id.exists' => 'ID tidak terdaftar',
 
-            'item_id.required' => 'Item tidak boleh kosong',
-            'item_id.exists' => 'Item tidak terdaftar',
+            // 'item_id.required' => 'Item tidak boleh kosong',
+            // 'item_id.exists' => 'Item tidak terdaftar',
 
-            'qty_in.required_if' => 'Qty Tidak boleh kosong',
-            'qty_in.numeric' => 'Qty harus angka',
-            'qty_in.min' => 'Qty minimal 1',
+            // 'qty_in.required_if' => 'Qty Tidak boleh kosong',
+            // 'qty_in.numeric' => 'Qty harus angka',
+            // 'qty_in.min' => 'Qty minimal 1',
 
-            'qty_out.required_if' => 'Qty Tidak boleh kosong',
-            'qty_out.numeric' => 'Qty harus angka',
-            'qty_out.min' => 'Qty minimal 1',
+            // 'qty_out.required_if' => 'Qty Tidak boleh kosong',
+            // 'qty_out.numeric' => 'Qty harus angka',
+            // 'qty_out.min' => 'Qty minimal 1',
 
 
             'type.required' => 'Type Tidak boleh kosong',

@@ -21,15 +21,10 @@ class TransactionResource extends JsonResource
             'warehouse'         => new \App\Http\Resources\HrmRevisiLokasiResource($this->whenLoaded('warehouse')),
             'warehouse_source'  => new \App\Http\Resources\HrmRevisiLokasiResource($this->whenLoaded('warehouse_source')),
             'warehouse_target'  => new \App\Http\Resources\HrmRevisiLokasiResource($this->whenLoaded('warehouse_target')),
-            'item'              => new ItemResource($this->whenLoaded('item')),
-
-            'qty_in'            => $this->qty_in,
-            'qty_out'           => $this->qty_out,
-            'qty_reminder'      => $this->qty_reminder,
+            'details'           => TransactionDetailResource::collection($this->whenLoaded('details')),
             'note'              => $this->note,
             'status'            => $this->status,
             'type'              => $this->type,
-
             'requested_at'      => $this->requested_at,
             'confirmed_at'       => $this->confirmed_at,
             'requester'         => new IsUserResource($this->whenLoaded('requester')),
