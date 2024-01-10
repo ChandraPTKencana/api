@@ -114,6 +114,7 @@ class TransactionController extends Controller
       //   $model_query = $model_query->orderBy("role", $sort_lists["role"]);
       // }
     } else {
+      $model_query = $model_query->orderBy("confirmed_by","asc");
       $model_query = $model_query->orderBy('updated_at', 'DESC');
     }
     //======================================================================================================
@@ -222,6 +223,12 @@ class TransactionController extends Controller
     if($this->role=='ClientPabrik'){
       $model_query = $model_query->whereIn("hrm_revisi_lokasi_id",$this->admin->the_user->hrm_revisi_lokasis());
     }
+    $model_query = $model_query->where(function ($q){
+      $q->whereNull("ref_id");
+      $q->orWhere(function($q2){
+        $q2->whereNotNull("ref_id")->whereNotNull("confirmed_by");
+      });
+    });
     $model_query = $model_query->orderBy("ref_id","desc");
     $model_query = $model_query->with(['warehouse','warehouse_source','warehouse_target','requester', 'confirmer',
     'details'=>function($q){
@@ -356,7 +363,7 @@ class TransactionController extends Controller
       $type = $request->type;
       $model_query->type                        = $type;
 
-      $model_query->status                      = "done";
+      $model_query->status                      = "pending";
      
       $warehouse_target_id = $request->warehouse_target_id;
       if($type=="transfer"){
@@ -494,22 +501,13 @@ class TransactionController extends Controller
       // }
       
       $type = $request->type;
-      $old_type = $model_query->type;
-
-      $mdl = "";
-      if($old_type=='transfer'){
-        $mdl = Transaction::where("ref_id",$model_query->id)->lockForUpdate()->first();
-        if($mdl->confirmed_by != null){
-          throw new \Exception("Ubah ditolak. Data pada referensi sudah di konfirmasi.",1);
-        }
-      }
 
       $model_query->hrm_revisi_lokasi_id        = $warehouse_id;
       $model_query->note                        = MyLib::emptyStrToNull($request->note);
       
       $model_query->type                        = $type;
   
-      $model_query->status                      = "done";
+      $model_query->status                      = "pending";
       $warehouse_target_id = $request->warehouse_target_id;
       if($type=="transfer"){
         if($warehouse_id==$warehouse_target_id)
@@ -585,6 +583,10 @@ class TransactionController extends Controller
               array_push($for_adds, $details_in[$k]);
         } else
             array_push($for_deletes, $details_in[$k]);
+      }
+
+      if(count($for_adds)==0 && count($for_edits)==0){
+        throw new \Exception("Item harus Diisi",1);
       }
 
       $data_to_processes = array_merge($for_deletes, $for_edits, $for_adds);
@@ -742,11 +744,11 @@ class TransactionController extends Controller
           "message" => $e->getMessage(),
         ], 400);
       }
-      return response()->json([
-        "getCode" => $e->getCode(),
-        "line" => $e->getLine(),
-        "message" => $e->getMessage(),
-      ], 400);
+      // return response()->json([
+      //   "getCode" => $e->getCode(),
+      //   "line" => $e->getLine(),
+      //   "message" => $e->getMessage(),
+      // ], 400);
       return response()->json([
         "message" => "Proses ubah data gagal"
       ], 400);
@@ -935,12 +937,12 @@ class TransactionController extends Controller
           }
     
     
-          if (isset($like_lists["item_name"])) {
-            $q->orWhereIn("st_item_id", function($q2)use($like_lists) {
-              $q2->from('st_items')
-              ->select('id')->where("name",'like',$like_lists['item_name']);          
-            });
-          }
+          // if (isset($like_lists["item_name"])) {
+          //   $q->orWhereIn("st_item_id", function($q2)use($like_lists) {
+          //     $q2->from('st_items')
+          //     ->select('id')->where("name",'like',$like_lists['item_name']);          
+          //   });
+          // }
     
           if (isset($like_lists["status"])) {
             $q->orWhere("status", "like", $like_lists["status"]);
@@ -1001,11 +1003,15 @@ class TransactionController extends Controller
     $warehouse_ids = \App\Models\HrmRevisiLokasi::get()->pluck("id")->toArray();
 
 
-    $model_query = $model_query->whereIn("hrm_revisi_lokasi_target_id",$warehouse_ids)->whereNull('confirmed_by');
+    $model_query = $model_query->whereIn("hrm_revisi_lokasi_target_id",$warehouse_ids)->whereNull('confirmed_by')->whereNotNull("ref_id");
     $model_query = $model_query->orderBy("ref_id","desc");
     $model_query = $model_query->with(['warehouse','warehouse_source','warehouse_target','requester', 'confirmer',
-    'item'=>function($q){
-      $q->with('unit');      
+    'details'=>function($q){
+      $q->with([
+        'item'=>function($q){
+          $q->with('unit');      
+        }
+      ]);      
     }])->get();
 
 
@@ -1020,60 +1026,60 @@ class TransactionController extends Controller
 
 
 
-  public function request_transaction_confirm(Request $request)
-  {
-    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+  // public function request_transaction_confirm(Request $request)
+  // {
+  //   MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
 
-    DB::beginTransaction();
-    try {
+  //   DB::beginTransaction();
+  //   try {
 
-      $model_query                         = Transaction::find($request->id);
-      if(!$model_query)
-      throw new \Exception("Data tidak ditemukan", 1);
+  //     $model_query                         = Transaction::find($request->id);
+  //     if(!$model_query)
+  //     throw new \Exception("Data tidak ditemukan", 1);
 
-      if($model_query->qty_reminder!=null)
-      throw new \Exception("Transaksi tidak bisa dilanjutkan karna sisa sudah terisi", 1);
+  //     if($model_query->qty_reminder!=null)
+  //     throw new \Exception("Transaksi tidak bisa dilanjutkan karna sisa sudah terisi", 1);
 
-      $warehouse_id = $model_query->hrm_revisi_lokasi_id;
-      if($this->role=='ClientPabrik')
-      $warehouse_id = MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);      
-      $model_query->status                    = "done";
-      $model_query->confirmed_at              = date("Y-m-d H:i:s");
-      $model_query->confirmed_by              = $this->admin_id;
-      $model_query->updated_at                = date("Y-m-d H:i:s");
+  //     $warehouse_id = $model_query->hrm_revisi_lokasi_id;
+  //     if($this->role=='ClientPabrik')
+  //     $warehouse_id = MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);      
+  //     $model_query->status                    = "done";
+  //     $model_query->confirmed_at              = date("Y-m-d H:i:s");
+  //     $model_query->confirmed_by              = $this->admin_id;
+  //     $model_query->updated_at                = date("Y-m-d H:i:s");
 
 
-      $qty_reminder = 0;
-      $dt_before = $this->getLastDataConfirmed($warehouse_id,$model_query->st_item_id);
-      if($dt_before)
-      $qty_reminder = $dt_before->qty_reminder;
+  //     $qty_reminder = 0;
+  //     $dt_before = $this->getLastDataConfirmed($warehouse_id,$model_query->st_item_id);
+  //     if($dt_before)
+  //     $qty_reminder = $dt_before->qty_reminder;
       
-      $qty_reminder += $model_query->qty_in;
-      $model_query->qty_reminder                = $qty_reminder;
+  //     $qty_reminder += $model_query->qty_in;
+  //     $model_query->qty_reminder                = $qty_reminder;
 
-      $model_query->save();
-      DB::commit();
-      return response()->json([
-        "message" => "Proses ubah data berhasil",
-      ], 200);
-    } catch (\Exception $e) {
-      DB::rollback();
-      // return response()->json([
-      //   "message" => $e->getMessage(),
-      // ], 400);
-      if ($e->getCode() == 1) {
-        return response()->json([
-          "message" => $e->getMessage(),
-        ], 400);
-      }
+  //     $model_query->save();
+  //     DB::commit();
+  //     return response()->json([
+  //       "message" => "Proses ubah data berhasil",
+  //     ], 200);
+  //   } catch (\Exception $e) {
+  //     DB::rollback();
+  //     // return response()->json([
+  //     //   "message" => $e->getMessage(),
+  //     // ], 400);
+  //     if ($e->getCode() == 1) {
+  //       return response()->json([
+  //         "message" => $e->getMessage(),
+  //       ], 400);
+  //     }
 
-      return response()->json([
-        "message" => "Proses ubah data gagal",
-        // "message" => $e->getMessage(),
+  //     return response()->json([
+  //       "message" => "Proses ubah data gagal",
+  //       // "message" => $e->getMessage(),
 
-      ], 400);
-    }
-  }
+  //     ], 400);
+  //   }
+  // }
 
   public function summary_transactions(Request $request)
   {
@@ -1222,7 +1228,7 @@ class TransactionController extends Controller
     DB::beginTransaction();
     try {
       $model_query             = Transaction::where("id",$request->id)->lockForUpdate()->first();
-      if($model_query->ref_id != null &&  $model_query->requested_by != $this->admin_id){
+      if($model_query->ref_id == null &&  $model_query->requested_by != $this->admin_id){
         throw new \Exception("Hanya yang membuat transaksi yang boleh melakukan konfirmasi data",1);
       }
 
@@ -1235,7 +1241,7 @@ class TransactionController extends Controller
   
       $type = $model_query->type;
 
-      if($type=="transfer"){
+      if($type=="transfer" && $model_query->ref_id==null){
         $model_query2                               = new Transaction();
         $model_query2->ref_id                       = $model_query->id;
         $model_query2->hrm_revisi_lokasi_id         = $model_query->hrm_revisi_lokasi_target_id;
@@ -1267,13 +1273,16 @@ class TransactionController extends Controller
           $qty_reminder = $prev_checks[$index]["qty_reminder"];
         }
 
-
-        if($type=="in"){
+        if($model_query->ref_id == null){
+          if($type=="in"){
+            $qty_reminder += $v->qty_in;
+          }elseif($type=="used" || $type=="transfer"){
+            if($qty_reminder - $v->qty_out < 0)
+              throw new \Exception("Qty melebihi stok : ".$qty_reminder, 1);
+            $qty_reminder-=$v->qty_out;
+          }
+        }else{
           $qty_reminder += $v->qty_in;
-        }elseif($type=="used" || $type=="transfer"){
-          if($qty_reminder - $v->qty_out < 0)
-            throw new \Exception("Qty melebihi stok : ".$qty_reminder, 1);
-          $qty_reminder-=$v->qty_out;
         }
 
 
@@ -1282,7 +1291,7 @@ class TransactionController extends Controller
           "qty_reminder"=>$qty_reminder
         ]);
         
-        if($type=="transfer"){
+        if($type=="transfer" && $model_query->ref_id==null){
           $model_query3 = new TransactionDetail();
           $model_query3->st_transaction_id = $model_query2->id;
           $model_query3->ordinal = $v->ordinal;
@@ -1295,6 +1304,7 @@ class TransactionController extends Controller
 
       $model_query->confirmed_at               = date("Y-m-d H:i:s");
       $model_query->confirmed_by               = $this->admin_id;
+      $model_query->status                     = "done";
 
       $model_query->save();
 
@@ -1309,11 +1319,11 @@ class TransactionController extends Controller
           "message" => $e->getMessage(),
         ], 400);
       }
-      return response()->json([
-        "getCode" => $e->getCode(),
-        "line" => $e->getLine(),
-        "message" => $e->getMessage(),
-      ], 400);
+      // return response()->json([
+      //   "getCode" => $e->getCode(),
+      //   "line" => $e->getLine(),
+      //   "message" => $e->getMessage(),
+      // ], 400);
       return response()->json([
         "message" => "Proses ubah data gagal"
       ], 400);

@@ -29,6 +29,7 @@ class TransactionResource extends JsonResource
             'confirmed_at'       => $this->confirmed_at,
             'requester'         => new IsUserResource($this->whenLoaded('requester')),
             'confirmer'          => new IsUserResource($this->whenLoaded('confirmer')),
+            'confirmed_by'       => $this->confirmed_by,
             'created_at'        => $this->created_at,
             'updated_at'        => $this->updated_at,
             'ref_id'            => $this->ref_id,
