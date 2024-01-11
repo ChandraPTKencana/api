@@ -60,6 +60,7 @@ Route::prefix("stok/api")->group(function(){
     Route::post('/request_transaction_confirm', [\App\Http\Controllers\Stok\TransactionController::class, 'request_transaction_confirm']);
 
     Route::get('/summary_transactions', [\App\Http\Controllers\Stok\TransactionController::class, 'summary_transactions']);
+    Route::get('/summary_detail_transactions', [\App\Http\Controllers\Stok\TransactionController::class, 'summary_detail_transactions']);
 
     Route::get('/hrm_revisi_lokasis', [\App\Http\Controllers\HrmRevisiLokasiController::class, 'index']);
     

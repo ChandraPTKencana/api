@@ -13,6 +13,8 @@ use App\Helpers\MyAdmin;
 use App\Helpers\MyLog;
 use App\Http\Requests\Stok\TransactionRequest;
 use App\Http\Resources\Stok\TransactionResource;
+use App\Models\HrmRevisiLokasi;
+use App\Models\Stok\Item;
 use App\Models\Stok\TransactionDetail;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -1024,155 +1026,137 @@ class TransactionController extends Controller
     ], 200);
   }
 
-
-
-  // public function request_transaction_confirm(Request $request)
-  // {
-  //   MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
-
-  //   DB::beginTransaction();
-  //   try {
-
-  //     $model_query                         = Transaction::find($request->id);
-  //     if(!$model_query)
-  //     throw new \Exception("Data tidak ditemukan", 1);
-
-  //     if($model_query->qty_reminder!=null)
-  //     throw new \Exception("Transaksi tidak bisa dilanjutkan karna sisa sudah terisi", 1);
-
-  //     $warehouse_id = $model_query->hrm_revisi_lokasi_id;
-  //     if($this->role=='ClientPabrik')
-  //     $warehouse_id = MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);      
-  //     $model_query->status                    = "done";
-  //     $model_query->confirmed_at              = date("Y-m-d H:i:s");
-  //     $model_query->confirmed_by              = $this->admin_id;
-  //     $model_query->updated_at                = date("Y-m-d H:i:s");
-
-
-  //     $qty_reminder = 0;
-  //     $dt_before = $this->getLastDataConfirmed($warehouse_id,$model_query->st_item_id);
-  //     if($dt_before)
-  //     $qty_reminder = $dt_before->qty_reminder;
-      
-  //     $qty_reminder += $model_query->qty_in;
-  //     $model_query->qty_reminder                = $qty_reminder;
-
-  //     $model_query->save();
-  //     DB::commit();
-  //     return response()->json([
-  //       "message" => "Proses ubah data berhasil",
-  //     ], 200);
-  //   } catch (\Exception $e) {
-  //     DB::rollback();
-  //     // return response()->json([
-  //     //   "message" => $e->getMessage(),
-  //     // ], 400);
-  //     if ($e->getCode() == 1) {
-  //       return response()->json([
-  //         "message" => $e->getMessage(),
-  //       ], 400);
-  //     }
-
-  //     return response()->json([
-  //       "message" => "Proses ubah data gagal",
-  //       // "message" => $e->getMessage(),
-
-  //     ], 400);
-  //   }
-  // }
-
   public function summary_transactions(Request $request)
   {
     MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
 
-    $model_query = new Transaction();
+    $warehouses = new HrmRevisiLokasi();
+
     if($this->role=='ClientPabrik'){
       $warehouse_ids = $this->admin->the_user->hrm_revisi_lokasis();
-      $model_query = $model_query->whereIn("hrm_revisi_lokasi_id",$warehouse_ids);
-    }else {
-      $warehouse_ids = \App\Models\HrmRevisiLokasi::get()->pluck("id")->toArray();
+      $warehouses = $warehouses->whereIn("id",$warehouse_ids);
     }
 
-    if($request->to){
-      $model_query = $model_query->where("updated_at","<=",$request->to);
+    $warehouses = $warehouses->get(); 
+    $items = Item::get();
+    $items_id = $items->pluck("id");
+    $subquery = TransactionDetail::selectRaw("distinct st_item_id,st_transactions.hrm_revisi_lokasi_id , max(st_transactions.updated_at) as max_updated_at")
+    ->whereIn("st_item_id",$items_id)
+    ->join("st_transactions",function ($q){
+      $q->on('st_transactions.id',"=","st_transaction_details.st_transaction_id");
+    })
+    ->whereNotNull("confirmed_by")
+    ->orderBy("st_transactions.updated_at","desc")
+    ->orderBy("ref_id","desc")
+    ->groupBy(["st_item_id","hrm_revisi_lokasi_id"]);
+
+    $model_query =TransactionDetail::selectRaw("st_transaction_id,st_transaction_details.st_item_id, qty_reminder, st_transactions.hrm_revisi_lokasi_id,st_transactions.updated_at,st_transactions.created_at")
+    ->joinSub($subquery,'dtfb',function ($join){
+      $join->on('st_transaction_details.st_item_id', '=', 'dtfb.st_item_id');
+    })
+    ->join("st_transactions",function ($join) {
+      $join->on("st_transactions.updated_at","dtfb.max_updated_at");
+      $join->on("st_transactions.id","st_transaction_details.st_transaction_id");
+    })
+    ->whereNotNull("st_transaction_details.qty_reminder")
+    ->lockForUpdate()
+    ->get();
+
+    $temp_items =[];
+    foreach ($items as $k => $v) {
+      array_push($temp_items,[
+        "id"=>$v->id,
+        "name"=>$v->name,
+        "qty_reminder"=>0,
+        "unit_name"=>$v->unit->name
+      ]);      
     }
 
-    $model_query = $model_query->whereNotNull("qty_reminder");
-    $model_query = $model_query->selectRaw('DISTINCT hrm_revisi_lokasi_id,st_item_id,max(updated_at)');
-    $model_query = $model_query->groupBy(['hrm_revisi_lokasi_id','st_item_id']);
-    $model_query = $model_query->get();
+    $temp_data =[];
+    foreach ($warehouses as $k => $v) {
+      array_push($temp_data,[
+        "id"=>$v->id,
+        "lokasi"=>$v->lokasi,
+        "items"=>$temp_items
+      ]);
+    }
 
+    $temp_data_hrm_revisi_lokasi_ids = array_map(function ($x){
+      return $x["id"];
+    },$temp_data);
 
-    // SELECT t.user_id, t.location_id, t.qty
-    // FROM tests t
-    // JOIN (
-    //     SELECT user_id, location_id, MAX(updated_at) AS max_updated_at
-    //     FROM tests
-    //     GROUP BY user_id, location_id
-    // ) max_dates
-    // ON t.user_id = max_dates.user_id
-    //    AND t.location_id = max_dates.location_id
-    //    AND t.updated_at = max_dates.max_updated_at;
+    foreach ($model_query as $k => $v) {
+      $index = array_search($v->hrm_revisi_lokasi_id, $temp_data_hrm_revisi_lokasi_ids);
+      if($index===false) continue;
+
+      $temp_items_id = array_map(function ($x) {
+        return $x["id"];
+      },$temp_data[$index]["items"]);
+      $index2 = array_search($v->st_item_id, $temp_items_id);
+      if($index2===false) continue;
+      $temp_data[$index]["items"][$index2]["qty_reminder"] = $v->qty_reminder;
+    }
 
     return response()->json([
-      "q" => $model_query,
-    ], 400);
+      "all" => $temp_data,
+      "column_header"=>$warehouses,
+      "row_header"=>$items,
+    ], 200);
 
-
-    DB::beginTransaction();
-    try {
-
-      
-
-
-      $model_query                         = Transaction::find($request->id);
-      if(!$model_query)
-      throw new \Exception("Data tidak ditemukan", 1);
-
-      if($model_query->qty_reminder!=null)
-      throw new \Exception("Transaksi tidak bisa dilanjutkan karna sisa sudah terisi", 1);
-
-      $warehouse_id = $model_query->hrm_revisi_lokasi_id;
-      if($this->role=='ClientPabrik')
-      $warehouse_id = MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);      
-      $model_query->status                    = "done";
-      $model_query->confirmed_at              = date("Y-m-d H:i:s");
-      $model_query->confirmed_by              = $this->admin_id;
-      $model_query->updated_at                = date("Y-m-d H:i:s");
-
-
-      $qty_reminder = 0;
-      $dt_before = $this->getLastDataConfirmed($warehouse_id,$model_query->st_item_id);      
-      if($dt_before)
-      $qty_reminder = $dt_before->qty_reminder;
-      
-      $qty_reminder += $model_query->qty_in;
-      $model_query->qty_reminder                = $qty_reminder;
-
-      $model_query->save();
-      DB::commit();
-      return response()->json([
-        "message" => "Proses ubah data berhasil",
-      ], 200);
-    } catch (\Exception $e) {
-      DB::rollback();
-      // return response()->json([
-      //   "message" => $e->getMessage(),
-      // ], 400);
-      if ($e->getCode() == 1) {
-        return response()->json([
-          "message" => $e->getMessage(),
-        ], 400);
-      }
-
-      return response()->json([
-        "message" => "Proses ubah data gagal",
-        // "message" => $e->getMessage(),
-
-      ], 400);
-    }
   }
 
+  public function summary_detail_transactions(Request $request) {
+    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+    
+    $rules = [
+      'item_id' => 'required|exists:\App\Models\Stok\Item,id',
+      'warehouse_id' => 'required|exists:\App\Models\HrmRevisiLokasi,id',
+    ];
+
+    $messages = [
+      'item_id.required' => 'Item ID tidak boleh kosong',
+      'item_id.exists' => 'Item ID tidak terdaftar',
+
+      'warehouse_id.required' => 'Warehouse ID tidak boleh kosong',
+      'warehouse_id.exists' => 'Warehouse ID tidak terdaftar',
+    ];
+
+    $validator = \Validator::make($request->all(), $rules, $messages);
+
+    if ($validator->fails()) {
+      throw new ValidationException($validator);
+    }
+
+    $item_id = $request->item_id;
+    $warehouse_id = $request->warehouse_id;
+
+    if($this->role=='ClientPabrik')
+    MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$warehouse_id);
+
+    $model_query = TransactionDetail::where('st_item_id',$item_id)
+    ->join("st_transactions",function ($join)use($warehouse_id) {
+      $join->on("st_transactions.id","=","st_transaction_details.st_transaction_id");
+      $join->where("hrm_revisi_lokasi_id",$warehouse_id);
+      $join->whereNotNull("confirmed_by");
+    })
+    ->leftjoin("hrm_revisi_lokasi",function ($join)use($warehouse_id) {
+      $join->on("hrm_revisi_lokasi.id","=","st_transactions.hrm_revisi_lokasi_target_id");
+    })
+    ->orderBy("st_transactions.updated_at","desc")
+    ->get();
+
+    // return response()->json([
+    //   "data" => $model_query,
+    // ], 400);
+
+    // foreach ($model_query as $k => $v) {
+    // }
+
+    return response()->json([
+      "data" => $model_query,
+    ], 200);
+  }
+    
 
   public function getLastDataConfirmed($items_id,$hrm_revisi_lokasi_id){
     $subquery = TransactionDetail::selectRaw("distinct st_item_id,max(st_transactions.updated_at) as max_updated_at")
