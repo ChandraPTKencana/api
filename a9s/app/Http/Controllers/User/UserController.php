@@ -337,9 +337,9 @@ class UserController extends Controller
       ], 200);
     } catch (\Exception  $e) {
       DB::rollback();
-      if ($e->getCode() == "23503")
+      if ($e->getCode() == "23000")
         return response()->json([
-          "message" => "Data tidak dapat dihapus, data masih terkait dengan data yang lain nya",
+          "message" => "Data tidak dapat dihapus, data terkait dengan data yang lain nya",
         ], 400);
 
       if ($e->getCode() == 1) {
