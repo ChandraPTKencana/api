@@ -314,6 +314,13 @@ class UnitController extends Controller
       ], 200);
     } catch (\Exception  $e) {
       DB::rollback();
+
+      return response()->json([
+        "getCode" => $e->getCode(),
+        "line" => $e->getLine(),
+        "message" => $e->getMessage(),
+      ], 400);
+
       if ($e->getCode() == "23503")
         return response()->json([
           "message" => "Data tidak dapat dihapus, data masih terkait dengan data yang lain nya",
