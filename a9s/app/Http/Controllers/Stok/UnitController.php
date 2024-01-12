@@ -32,7 +32,7 @@ class UnitController extends Controller
 
   public function index(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['User']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User']);
 
     //======================================================================================================
     // Pembatasan Data hanya memerlukan limit dan offset
@@ -226,7 +226,7 @@ class UnitController extends Controller
 
   public function store(UnitRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['User']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User']);
 
     $name = $request->name;
 
@@ -264,7 +264,7 @@ class UnitController extends Controller
 
   public function update(UnitRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['User']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User']);
 
     DB::beginTransaction();
     try {
@@ -297,7 +297,7 @@ class UnitController extends Controller
 
   public function delete(UnitRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['User']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User']);
 
     DB::beginTransaction();
 

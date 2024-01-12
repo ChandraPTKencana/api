@@ -36,7 +36,7 @@ class TransactionController extends Controller
 
   public function index(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
 
     //======================================================================================================
     // Pembatasan Data hanya memerlukan limit dan offset
@@ -256,7 +256,7 @@ class TransactionController extends Controller
 
   public function show(TransactionRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
 
     $model_query = Transaction::with(['warehouse','warehouse_source','warehouse_target','requester', 'confirmer',
     'details'=>function($q){
@@ -346,7 +346,7 @@ class TransactionController extends Controller
 
   public function store(TransactionRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
 
     $details_in = json_decode($request->details, true);
     $this->validateItems($details_in);
@@ -472,7 +472,7 @@ class TransactionController extends Controller
 
   public function update(TransactionRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
     
     $details_in = json_decode($request->details, true);
     $this->validateItems($details_in);
@@ -759,7 +759,7 @@ class TransactionController extends Controller
 
   public function delete(TransactionRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
 
     DB::beginTransaction();
 
@@ -813,7 +813,7 @@ class TransactionController extends Controller
 
   public function request_transactions(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
 
     //======================================================================================================
     // Pembatasan Data hanya memerlukan limit dan offset
@@ -1028,7 +1028,7 @@ class TransactionController extends Controller
 
   public function summary_transactions(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
 
     $warehouses = new HrmRevisiLokasi();
 
@@ -1106,7 +1106,7 @@ class TransactionController extends Controller
   }
 
   public function summary_detail_transactions(Request $request) {
-    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
     
     $rules = [
       'item_id' => 'required|exists:\App\Models\Stok\Item,id',
@@ -1192,7 +1192,7 @@ class TransactionController extends Controller
   }
 
   public function confirm_transaction(Request $request) {
-    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
     
     $rules = [
       'id' => 'required|exists:\App\Models\Stok\Transaction,id',

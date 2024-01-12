@@ -32,7 +32,7 @@ class HrmRevisiLokasiController extends Controller
 
   public function index(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
 
     //======================================================================================================
     // Pembatasan Data hanya memerlukan limit dan offset
@@ -235,7 +235,7 @@ class HrmRevisiLokasiController extends Controller
 
   public function store(HrmRevisiLokasiRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['User']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User']);
 
     $name = $request->name;
 
@@ -273,7 +273,7 @@ class HrmRevisiLokasiController extends Controller
 
   public function update(HrmRevisiLokasiRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['User']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User']);
 
     DB::beginTransaction();
     try {
@@ -306,7 +306,7 @@ class HrmRevisiLokasiController extends Controller
 
   public function delete(HrmRevisiLokasiRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['User']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User']);
 
     DB::beginTransaction();
 
