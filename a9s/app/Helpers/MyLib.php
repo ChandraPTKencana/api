@@ -192,6 +192,14 @@ class MyLib
     return round((float)($date->format("U") . "." . $date->format("v")) * 1000);
   }
 
+  public static function utcDateToIdnDate($strDate)
+  {
+    // date local to utc millis
+    $date = new \DateTime($strDate);
+    $date->add(new \DateInterval('PT7H'));
+    return $date->format('Y-m-d\TH:i:s.v\Z');
+  }
+
 
   public static function millisToDateUTC($millis)
   {

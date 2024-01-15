@@ -104,7 +104,7 @@ class TransactionController extends Controller
       if (isset($sort_lists["updated_at"])) {
         $model_query = $model_query->orderBy("updated_at", $sort_lists["updated_at"]);
         if (count($first_row) > 0) {
-          $model_query = $model_query->where("updated_at",$sort_symbol,$first_row["updated_at"]);
+          $model_query = $model_query->where("updated_at",$sort_symbol,MyLib::utcDateToIdnDate($first_row["updated_at"]));
         }
       }
 
@@ -881,7 +881,7 @@ class TransactionController extends Controller
       if (isset($sort_lists["created_at"])) {
         $model_query = $model_query->orderBy("created_at", $sort_lists["created_at"]);
         if (count($first_row) > 0) {
-          $model_query = $model_query->where("created_at",$sort_symbol,$first_row["created_at"]);
+          $model_query = $model_query->where("created_at",$sort_symbol,MyLib::utcDateToIdnDate($first_row["created_at"]));
         }
       }
 

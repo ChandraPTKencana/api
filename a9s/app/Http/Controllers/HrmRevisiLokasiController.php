@@ -101,7 +101,7 @@ class HrmRevisiLokasiController extends Controller
       if (isset($sort_lists["created_at"])) {
         $model_query = $model_query->orderBy("created_date", $sort_lists["created_at"]);
         if (count($first_row) > 0) {
-          $model_query = $model_query->where("created_date",$sort_symbol,$first_row["created_at"]);
+          $model_query = $model_query->where("created_date",$sort_symbol,MyLib::utcDateToIdnDate($first_row["created_at"]));
         }
       }
 
