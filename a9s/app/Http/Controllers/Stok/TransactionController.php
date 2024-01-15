@@ -1166,7 +1166,7 @@ class TransactionController extends Controller
         $q->where("hrm_revisi_lokasi_id",$hrm_revisi_lokasi_id);
       })
       ->whereNotNull("confirmed_by")
-      ->groupBy("st_item_id")
+      ->groupBy(["st_item_id","st_transactions.updated_at"])
       ->orderBy("st_transactions.updated_at","desc")
       ->orderBy("ref_id","desc");
 
