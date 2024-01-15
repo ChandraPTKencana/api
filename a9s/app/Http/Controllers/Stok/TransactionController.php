@@ -1166,9 +1166,9 @@ class TransactionController extends Controller
         $q->where("hrm_revisi_lokasi_id",$hrm_revisi_lokasi_id);
       })
       ->whereNotNull("confirmed_by")
+      ->groupBy("st_item_id")
       ->orderBy("st_transactions.updated_at","desc")
-      ->orderBy("ref_id","desc")
-      ->groupBy("st_item_id");
+      ->orderBy("ref_id","desc");
 
     return TransactionDetail::select("*")
       ->joinSub($subquery,'dtfb',function ($join){
