@@ -114,7 +114,7 @@ class UserAccount extends Controller
       "username" => $admin->the_user->username,
       "fullname" => $admin->the_user->nama_user,
       "email" => $admin->the_user->email ?? '',
-      "photo" => $admin->the_user->foto ? ($_ENV['USER_IMG_LOCATION'].$admin->the_user->foto) : null,
+      "photo" => $admin->the_user->foto ? ("/ho/images/user/".$admin->the_user->foto) : null,
       "phone_number" => $admin->the_user->telepon,
     ], 200);
   }
@@ -215,6 +215,8 @@ class UserAccount extends Controller
     try {
       $new_image = $request->file('photo');
       $filePath = "ho/images/user/";
+      $model_query                      = IsUser::find($admin->the_user->id_user);
+      $location = $model_query->foto;
 
       if ($new_image != null) {
         $date = new \DateTime();
@@ -231,7 +233,6 @@ class UserAccount extends Controller
         $location = null;
       }
 
-      $model_query                      = IsUser::find($admin->the_user->id_user);
 
       if ($photo_preview == null) {
         if (File::exists(files_path($filePath.$model_query->foto)) && $model_query->foto != null) {
