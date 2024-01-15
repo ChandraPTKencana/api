@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('st_transaction_detailsx', function (Blueprint $table) {
+        Schema::create('st_transaction_details', function (Blueprint $table) {
             // $table->bigInteger("st_transaction_id");
             $table->foreignId('st_transaction_id')->references('id')->on('st_transactions')->onDelete('restrict')->onUpdate('cascade');
 
@@ -39,10 +39,10 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('st_transaction_detailsx', function (Blueprint $table) {
+        Schema::table('st_transaction_details', function (Blueprint $table) {
             $table->dropForeign(['st_transaction_id']);
             $table->dropForeign(['st_item_id']);
         });
-        Schema::dropIfExists('st_transaction_detailsx');
+        Schema::dropIfExists('st_transaction_details');
     }
 };
