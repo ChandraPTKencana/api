@@ -1046,9 +1046,9 @@ class TransactionController extends Controller
       $q->on('st_transactions.id',"=","st_transaction_details.st_transaction_id");
     })
     ->whereNotNull("confirmed_by")
-    ->groupBy(["st_item_id","hrm_revisi_lokasi_id","st_transactions.updated_at","ref_id"])
-    ->orderBy("st_transactions.updated_at","desc")
-    ->orderBy("ref_id","desc");
+    // ->orderBy("st_transactions.updated_at","desc")
+    // ->orderBy("ref_id","desc")
+    ->groupBy(["st_item_id","hrm_revisi_lokasi_id"]);
 
     $model_query =TransactionDetail::selectRaw("st_transaction_id,st_transaction_details.st_item_id, qty_reminder, st_transactions.hrm_revisi_lokasi_id,st_transactions.updated_at,st_transactions.created_at")
     ->joinSub($subquery,'dtfb',function ($join){
@@ -1143,6 +1143,7 @@ class TransactionController extends Controller
       $join->on("hrm_revisi_lokasi.id","=","st_transactions.hrm_revisi_lokasi_target_id");
     })
     ->orderBy("st_transactions.updated_at","desc")
+    ->orderBy("ref_id","desc")
     ->get();
 
     // return response()->json([
@@ -1166,9 +1167,9 @@ class TransactionController extends Controller
         $q->where("hrm_revisi_lokasi_id",$hrm_revisi_lokasi_id);
       })
       ->whereNotNull("confirmed_by")
-      ->groupBy(["st_item_id","st_transactions.updated_at","ref_id"])
-      ->orderBy("st_transactions.updated_at","desc")
-      ->orderBy("ref_id","desc");
+      // ->orderBy("st_transactions.updated_at","desc")
+      // ->orderBy("ref_id","desc")
+      ->groupBy("st_item_id");
 
     return TransactionDetail::select("*")
       ->joinSub($subquery,'dtfb',function ($join){
