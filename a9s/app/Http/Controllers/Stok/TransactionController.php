@@ -1037,6 +1037,15 @@ class TransactionController extends Controller
       $warehouses = $warehouses->whereIn("id",$warehouse_ids);
     }
 
+    $date_to = $request->to;
+    // $date_to = str_replace('"', '', $date_to);
+    $date_to = MyLib::utcDateToIdnDate(trim($date_to, '"'));
+
+    $date_to = new \DateTime($date_to);
+    $date_to->add(new \DateInterval('P1D'));
+    // $date = $date->format('Y-m-d H:i:s');
+    $date_to = $date_to->format('Y-m-d')."T00:00:00.000Z";
+
     $warehouses = $warehouses->get(); 
     $items = Item::get();
     $items_id = $items->pluck("id");
@@ -1046,6 +1055,7 @@ class TransactionController extends Controller
       $q->on('st_transactions.id',"=","st_transaction_details.st_transaction_id");
     })
     ->whereNotNull("confirmed_by")
+    ->where("st_transactions.updated_at","<=",$date_to)
     // ->orderBy("st_transactions.updated_at","desc")
     // ->orderBy("ref_id","desc")
     ->groupBy(["st_item_id","hrm_revisi_lokasi_id"]);
