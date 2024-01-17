@@ -177,6 +177,8 @@ class HrmRevisiLokasiController extends Controller
       $model_query = $model_query->whereIn("id",$this->admin->the_user->hrm_revisi_lokasis());
     }
   
+    $model_query = $model_query->where("lokasi","not like","Ramp%");
+
     $model_query = $model_query->get();
 
     return response()->json([

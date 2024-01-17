@@ -1036,8 +1036,15 @@ class TransactionController extends Controller
       $warehouse_ids = $this->admin->the_user->hrm_revisi_lokasis();
       $warehouses = $warehouses->whereIn("id",$warehouse_ids);
     }
+    $warehouses = $warehouses->where("lokasi","not like","Ramp%");
+
 
     $date_to = $request->to;
+    if(!$date_to){
+      return response()->json([
+        "message" => "Tanggal tidak boleh kosong",
+      ], 400);
+    }
     // $date_to = str_replace('"', '', $date_to);
     $date_to = MyLib::utcDateToIdnDate(trim($date_to, '"'));
 
@@ -1220,6 +1227,23 @@ class TransactionController extends Controller
       throw new ValidationException($validator);
     }
 
+    $date_to = $request->to;
+    if(!$date_to){
+      return response()->json([
+        "message" => "Tanggal tidak boleh kosong",
+      ], 400);
+    }
+    // $date_to = str_replace('"', '', $date_to);
+    $date_to = MyLib::utcDateToIdnDate(trim($date_to, '"'));
+    $dates = explode("T",$date_to);
+    
+    // $date_to = new \DateTime($date_to);
+    // $date_to->add(new \DateInterval('P1D'));
+    // $date = $date->format('Y-m-d H:i:s');
+    // $date_to = $date_to->format('Y-m-d')."T00:00:00.000Z";
+    $nowTime = date("H:i:s");
+    $nDateTime = $dates[0]." ".$nowTime;
+
     DB::beginTransaction();
     try {
       $model_query             = Transaction::where("id",$request->id)->lockForUpdate()->first();
@@ -1299,6 +1323,7 @@ class TransactionController extends Controller
 
       $model_query->confirmed_at               = date("Y-m-d H:i:s");
       $model_query->confirmed_by               = $this->admin_id;
+      $model_query->input_at                   = $nDateTime;
       $model_query->status                     = "done";
 
       $model_query->save();
