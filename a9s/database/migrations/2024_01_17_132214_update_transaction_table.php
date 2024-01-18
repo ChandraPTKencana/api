@@ -14,7 +14,8 @@ return new class extends Migration
     public function up()
     {
         Schema::table('st_transactions', function (Blueprint $table) {
-            $table->timestamp('input_at')->useCurrent();            
+            $table->date('input_at')->nullable();            
+            $table->integer('input_ordinal')->default(0);            
         });
     }
 
@@ -27,6 +28,9 @@ return new class extends Migration
     {
         Schema::table('st_transactions', function (Blueprint $table) {
             $table->dropColumn('input_at');
+            $table->dropColumn('input_ordinal');
+
+            // $table->dropColumn('created_at');
         });
 
     }

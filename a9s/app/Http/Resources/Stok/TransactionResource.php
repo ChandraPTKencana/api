@@ -30,9 +30,9 @@ class TransactionResource extends JsonResource
             'requester'         => new IsUserResource($this->whenLoaded('requester')),
             'confirmer'         => new IsUserResource($this->whenLoaded('confirmer')),
             'confirmed_by'      => $this->confirmed_by,
-            'created_at'        => $this->created_at,
             'updated_at'        => $this->updated_at,
             'input_at'          => $this->input_at,
+            'input_ordinal'     => $this->input_ordinal,
             'ref_id'            => $this->ref_id,
         ];
     }

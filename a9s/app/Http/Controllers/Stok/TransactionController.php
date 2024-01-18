@@ -395,14 +395,14 @@ class TransactionController extends Controller
         }
         array_push($id_items, strtolower($value['item_id']));
       }
-      $items_id_in = array_map(function ($x) {
-        return $x["item_id"];
-      },$details_in);
+      // $items_id_in = array_map(function ($x) {
+      //   return $x["item_id"];
+      // },$details_in);
 
-      $prev_checks = $this->getLastDataConfirmed($items_id_in,$model_query->hrm_revisi_lokasi_id)->toArray();
-      $items_id = array_map(function ($x) {
-        return $x["st_item_id"];
-      },$prev_checks);
+      // $prev_checks = $this->getLastDataConfirmed($items_id_in,$model_query->hrm_revisi_lokasi_id)->toArray();
+      // $items_id = array_map(function ($x) {
+      //   return $x["st_item_id"];
+      // },$prev_checks);
 
 
       foreach ($details_in as $key => $value) {
@@ -426,16 +426,16 @@ class TransactionController extends Controller
           $detail->qty_in                      = $value['qty_in'];
         }
 
-        $index = array_search($value['item_id'], $items_id);
-        $qty_reminder = 0;
+        // $index_item = array_search($value['item_id'], $items_id);
+        // $qty_reminder = 0;
         
-        if ($index !== false){
-          $qty_reminder = $prev_checks[$index]["qty_reminder"];
-        }
+        // if ($index_item !== false){
+        //   $qty_reminder = $prev_checks[$index_item]["qty_reminder"];
+        // }
 
-        if(($type=="used" || $type=="transfer") && $qty_reminder - $value['qty_out'] < 0){
-          throw new \Exception("Qty melebihi stok : ".$qty_reminder, 1);
-        }
+        // if(($type=="used" || $type=="transfer") && $qty_reminder - $value['qty_out'] < 0){
+        //   // throw new \Exception("Qty melebihi stok : ".$qty_reminder, 1);
+        // }
 
 
         $detail->note              = $value['note'];
@@ -526,15 +526,15 @@ class TransactionController extends Controller
       }
 
 
-      $items_id_in = array_map(function ($x) {
-        return $x["item_id"];
-      },$details_in);
+      // $items_id_in = array_map(function ($x) {
+      //   return $x["item_id"];
+      // },$details_in);
 
-      $prev_checks = $this->getLastDataConfirmed($items_id_in,$model_query->hrm_revisi_lokasi_id)->toArray();
+      // $prev_checks = $this->getLastDataConfirmed($items_id_in,$model_query->hrm_revisi_lokasi_id)->toArray();
 
-      $items_id = array_map(function ($x) {
-        return $x["st_item_id"];
-      },$prev_checks);
+      // $items_id = array_map(function ($x) {
+      //   return $x["st_item_id"];
+      // },$prev_checks);
 
 
   
@@ -567,7 +567,7 @@ class TransactionController extends Controller
       $for_adds = [];
       $data_to_processes = [];
       foreach ($details_in as $k => $v) {
-        $item_id = $v['item_id'] ? $v['item_id'] : "";
+        // $item_id = $v['item_id'] ? $v['item_id'] : "";
         
         if (in_array($v["status"], ["Add", "Edit"])) {
           if (in_array(strtolower($v['item_id']), $id_items) == 1) {
@@ -641,18 +641,18 @@ class TransactionController extends Controller
           }
 
 
-          $indexItem = array_search($v['item_id'], $items_id);
-          $qty_reminder = 0;
+          // $indexItem = array_search($v['item_id'], $items_id);
+          // $qty_reminder = 0;
 
-          if ($indexItem !== false){
-            $qty_reminder = $prev_checks[$indexItem]["qty_reminder"];
-          }
+          // if ($indexItem !== false){
+          //   $qty_reminder = $prev_checks[$indexItem]["qty_reminder"];
+          // }
   
-          if(($type=="used" || $type=="transfer") && $qty_reminder - $v['qty_out'] < 0){
-            // MyLog::logging($prev_checks);
+          // if(($type=="used" || $type=="transfer") && $qty_reminder - $v['qty_out'] < 0){
+          //   // MyLog::logging($prev_checks);
 
-            throw new \Exception("Baris #" .$ordinal.".Qty melebihi stok : ".$qty_reminder, 1);
-          }
+          //   // throw new \Exception("Baris #" .$ordinal.".Qty melebihi stok : ".$qty_reminder, 1);
+          // }
         }
 
 
@@ -878,10 +878,10 @@ class TransactionController extends Controller
         }
       }
 
-      if (isset($sort_lists["created_at"])) {
-        $model_query = $model_query->orderBy("created_at", $sort_lists["created_at"]);
+      if (isset($sort_lists["input_at"])) {
+        $model_query = $model_query->orderBy("input_at", $sort_lists["input_at"]);
         if (count($first_row) > 0) {
-          $model_query = $model_query->where("created_at",$sort_symbol,MyLib::utcDateToIdnDate($first_row["created_at"]));
+          $model_query = $model_query->where("input_at",$sort_symbol,MyLib::utcDateToIdnDate($first_row["input_at"]));
         }
       }
 
@@ -893,7 +893,7 @@ class TransactionController extends Controller
       //   $model_query = $model_query->orderBy("role", $sort_lists["role"]);
       // }
     } else {
-      $model_query = $model_query->orderBy('created_at', 'DESC');
+      $model_query = $model_query->orderBy('input_at', 'DESC');
     }
     //======================================================================================================
     // Model Filter | Example $request->like = "username:%username,role:%role%,name:role%,";
@@ -1047,33 +1047,34 @@ class TransactionController extends Controller
     }
     // $date_to = str_replace('"', '', $date_to);
     $date_to = MyLib::utcDateToIdnDate(trim($date_to, '"'));
-
-    $date_to = new \DateTime($date_to);
-    $date_to->add(new \DateInterval('P1D'));
-    // $date = $date->format('Y-m-d H:i:s');
-    $date_to = $date_to->format('Y-m-d')."T00:00:00.000Z";
+    $dates = explode("T",$date_to);
+    // $date_to = new \DateTime($date_to);
+    // $date_to->add(new \DateInterval('P1D'));
+    // // $date = $date->format('Y-m-d H:i:s');
+    // $date_to = $date_to->format('Y-m-d')."T00:00:00.000Z";
 
     $warehouses = $warehouses->get(); 
     $items = Item::get();
     $items_id = $items->pluck("id");
-    $subquery = TransactionDetail::selectRaw("distinct st_item_id,st_transactions.hrm_revisi_lokasi_id , max(st_transactions.updated_at) as max_updated_at")
+    $subquery = TransactionDetail::selectRaw("distinct st_item_id,st_transactions.hrm_revisi_lokasi_id , max(st_transactions.input_at) as max_input_at")
     ->whereIn("st_item_id",$items_id)
     ->join("st_transactions",function ($q){
       $q->on('st_transactions.id',"=","st_transaction_details.st_transaction_id");
     })
     ->whereNotNull("confirmed_by")
-    ->where("st_transactions.updated_at","<=",$date_to)
-    // ->orderBy("st_transactions.updated_at","desc")
+    ->where("st_transactions.input_at","<=",$dates[0])
+    // ->orderBy("st_transactions.input_at","desc")
     // ->orderBy("ref_id","desc")
     ->groupBy(["st_item_id","hrm_revisi_lokasi_id"]);
 
-    $model_query =TransactionDetail::selectRaw("st_transaction_id,st_transaction_details.st_item_id, qty_reminder, st_transactions.hrm_revisi_lokasi_id,st_transactions.updated_at,st_transactions.created_at")
+    $model_query =TransactionDetail::selectRaw("st_transaction_id,st_transaction_details.st_item_id, qty_reminder, st_transactions.hrm_revisi_lokasi_id,st_transactions.updated_at,st_transactions.input_at")
     ->joinSub($subquery,'dtfb',function ($join){
       $join->on('st_transaction_details.st_item_id', '=', 'dtfb.st_item_id');
     })
     ->join("st_transactions",function ($join) {
-      $join->on("st_transactions.updated_at","dtfb.max_updated_at");
+      $join->on("st_transactions.input_at","dtfb.max_input_at");
       $join->on("st_transactions.id","st_transaction_details.st_transaction_id");
+      $join->orderBy("st_transactions.input_ordinal","desc");
     })
     ->whereNotNull("st_transaction_details.qty_reminder")
     ->lockForUpdate()
@@ -1159,7 +1160,8 @@ class TransactionController extends Controller
     ->leftjoin("hrm_revisi_lokasi",function ($join)use($warehouse_id) {
       $join->on("hrm_revisi_lokasi.id","=","st_transactions.hrm_revisi_lokasi_target_id");
     })
-    ->orderBy("st_transactions.updated_at","desc")
+    ->orderBy("st_transactions.input_at","desc")
+    ->orderBy("st_transactions.input_ordinal","desc")
     ->orderBy("ref_id","desc")
     ->get();
 
@@ -1176,25 +1178,28 @@ class TransactionController extends Controller
   }
     
 
-  public function getLastDataConfirmed($items_id,$hrm_revisi_lokasi_id){
-    $subquery = TransactionDetail::selectRaw("distinct st_item_id,max(st_transactions.updated_at) as max_updated_at")
-      ->whereIn("st_item_id",$items_id)
-      ->join("st_transactions",function ($q)use($hrm_revisi_lokasi_id){
-        $q->on('st_transactions.id',"=","st_transaction_details.st_transaction_id");
-        $q->where("hrm_revisi_lokasi_id",$hrm_revisi_lokasi_id);
-      })
-      ->whereNotNull("confirmed_by")
-      // ->orderBy("st_transactions.updated_at","desc")
-      // ->orderBy("ref_id","desc")
-      ->groupBy("st_item_id");
+  public function getLastDataConfirmed($items_id,$hrm_revisi_lokasi_id,$date_limit=""){
+    
+    $subquery = TransactionDetail::selectRaw("distinct st_item_id,max(st_transactions.input_at) as max_input_at")
+    ->whereIn("st_item_id",$items_id)
+    ->join("st_transactions",function ($q)use($hrm_revisi_lokasi_id,$date_limit){
+      $q->on('st_transactions.id',"=","st_transaction_details.st_transaction_id");
+      $q->where("hrm_revisi_lokasi_id",$hrm_revisi_lokasi_id);
+
+      if($date_limit!="")
+      $q->where("input_at","<=",$date_limit);
+    })
+    ->whereNotNull("confirmed_by")
+    ->groupBy("st_item_id");
 
     return TransactionDetail::select("*")
       ->joinSub($subquery,'dtfb',function ($join){
         $join->on('st_transaction_details.st_item_id', '=', 'dtfb.st_item_id');
       })
       ->join("st_transactions",function ($join) {
-        $join->on("st_transactions.updated_at","dtfb.max_updated_at");
+        $join->on("st_transactions.input_at","dtfb.max_input_at");
         $join->on("st_transactions.id","st_transaction_details.st_transaction_id");
+        $join->orderBy("st_transactions.input_ordinal","desc");
       })
       ->whereNotNull("st_transaction_details.qty_reminder")
       ->lockForUpdate()
@@ -1202,7 +1207,7 @@ class TransactionController extends Controller
     // return Transaction::where('hrm_revisi_lokasi_id',$warehouse_id)
     // ->where('st_item_id',$item_id)
     // ->whereNotNull('confirmed_by')
-    // ->orderBy("updated_at","desc")
+    // ->orderBy("input_at","desc")
     // ->orderBy("ref_id","desc")
     // ->lockForUpdate()->first(); 
     
@@ -1241,8 +1246,8 @@ class TransactionController extends Controller
     // $date_to->add(new \DateInterval('P1D'));
     // $date = $date->format('Y-m-d H:i:s');
     // $date_to = $date_to->format('Y-m-d')."T00:00:00.000Z";
-    $nowTime = date("H:i:s");
-    $nDateTime = $dates[0]." ".$nowTime;
+    // $nowTime = date("H:i:s");
+    // $nDateTime = $dates[0]." ".$nowTime;
 
     DB::beginTransaction();
     try {
@@ -1278,7 +1283,7 @@ class TransactionController extends Controller
       ->orderBy("ordinal", "asc")->lockForUpdate()
       ->get();
 
-      $prev_checks = $this->getLastDataConfirmed($data_from_db->pluck("st_item_id"),$model_query->hrm_revisi_lokasi_id)->toArray();
+      $prev_checks = $this->getLastDataConfirmed($data_from_db->pluck("st_item_id"),$model_query->hrm_revisi_lokasi_id,$dates[0])->toArray();
       $items_id = array_map(function ($x) {
         return $x["st_item_id"];
       },$prev_checks);
@@ -1296,8 +1301,8 @@ class TransactionController extends Controller
           if($type=="in"){
             $qty_reminder += $v->qty_in;
           }elseif($type=="used" || $type=="transfer"){
-            if($qty_reminder - $v->qty_out < 0)
-              throw new \Exception("Qty melebihi stok : ".$qty_reminder, 1);
+            // if($qty_reminder - $v->qty_out < 0)
+            //   throw new \Exception("Qty melebihi stok : ".$qty_reminder, 1);
             $qty_reminder-=$v->qty_out;
           }
         }else{
@@ -1319,11 +1324,21 @@ class TransactionController extends Controller
           $model_query3->note = $v->note;
           $model_query3->save();
         }
+
+        //recalculate qty reminder
+        $this->recalculateQtyReminder($v->st_item_id,$model_query->hrm_revisi_lokasi_id,$dates[0],$v->qty_in - $v->qty_out);
       }
 
+    
+      $toGetMaxOrdinal = Transaction::where("input_at",$dates[0])->where("hrm_revisi_lokasi_id",$model_query->hrm_revisi_lokasi_id)->orderBy("input_ordinal","desc")->first();
+      // return response()->json([
+      //   "xmessage" => $toGetMaxOrdinal,
+      // ], 400);
       $model_query->confirmed_at               = date("Y-m-d H:i:s");
       $model_query->confirmed_by               = $this->admin_id;
-      $model_query->input_at                   = $nDateTime;
+      $model_query->input_at                   = $dates[0];
+      if($toGetMaxOrdinal)
+      $model_query->input_ordinal              = $toGetMaxOrdinal->input_ordinal + 1;
       $model_query->status                     = "done";
 
       $model_query->save();
@@ -1348,5 +1363,20 @@ class TransactionController extends Controller
         "message" => "Proses ubah data gagal"
       ], 400);
     }
+  }
+
+
+
+  public function recalculateQtyReminder($st_items_id,$hrm_revisi_lokasi_id,$date_limit,$qty){
+    
+    TransactionDetail::select("st_transaction_details.*")
+    ->where("st_item_id",$st_items_id)
+    ->whereIn("st_transaction_id",function ($q)use($hrm_revisi_lokasi_id,$date_limit){
+      $q->select("id")->from("st_transactions")->where("input_at",">",$date_limit);
+      $q->where("hrm_revisi_lokasi_id",$hrm_revisi_lokasi_id);
+    })->update([
+      "qty_reminder"=>DB::raw("`qty_reminder`+".($qty))
+    ]);
+    
   }
 }
