@@ -641,11 +641,11 @@ class TransactionController extends Controller
           }
 
 
-          $index = array_search($v['item_id'], $items_id);
+          $indexItem = array_search($v['item_id'], $items_id);
           $qty_reminder = 0;
 
-          if ($index !== false){
-            $qty_reminder = $prev_checks[$index]["qty_reminder"];
+          if ($indexItem !== false){
+            $qty_reminder = $prev_checks[$indexItem]["qty_reminder"];
           }
   
           if(($type=="used" || $type=="transfer") && $qty_reminder - $v['qty_out'] < 0){
