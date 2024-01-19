@@ -268,9 +268,11 @@ class TransactionController extends Controller
       $q->orderBy("ordinal","asc");
     }])->find($request->id);
 
-    if($model_query->requested_by != $this->admin_id){
-      throw new \Exception("Hanya yang membuat transaksi yang boleh melakukan pergantian atau konfirmasi data",1);
-    }
+    // if($model_query->requested_by != $this->admin_id){
+    //   return response()->json([
+    //     "message" => "Hanya yang membuat transaksi yang boleh melakukan pergantian atau konfirmasi data",
+    //   ], 400);
+    // }
     
     if($this->role=='ClientPabrik')
     MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);
@@ -765,6 +767,10 @@ class TransactionController extends Controller
 
     try {
       $model_query = Transaction::where("id",$request->id)->lockForUpdate()->first();
+      if($model_query->requested_by != $this->admin_id){
+        throw new \Exception("Hanya yang membuat transaksi yang boleh melakukan penghapusan data",1);
+      }
+      
       $model_querys = TransactionDetail::where("st_transaction_id",$model_query->id)->lockForUpdate()->get();
 
       if (!$model_query) {
