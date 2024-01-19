@@ -1151,7 +1151,7 @@ class TransactionController extends Controller
     if($this->role=='ClientPabrik')
     MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$warehouse_id);
 
-    $model_query = TransactionDetail::where('st_item_id',$item_id)
+    $model_query = TransactionDetail::selectRaw("st_transaction_details.*,st_transactions.type,st_transactions.input_at,st_transactions.updated_at,st_transactions.confirmed_at")->where('st_item_id',$item_id)
     ->join("st_transactions",function ($join)use($warehouse_id) {
       $join->on("st_transactions.id","=","st_transaction_details.st_transaction_id");
       $join->where("hrm_revisi_lokasi_id",$warehouse_id);
