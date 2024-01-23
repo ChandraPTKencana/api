@@ -32,7 +32,7 @@ class UnitController extends Controller
 
   public function index(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
 
     //======================================================================================================
     // Pembatasan Data hanya memerlukan limit dan offset
