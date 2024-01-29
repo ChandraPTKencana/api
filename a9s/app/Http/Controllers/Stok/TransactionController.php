@@ -1258,7 +1258,9 @@ class TransactionController extends Controller
     DB::beginTransaction();
     try {
       $model_query             = Transaction::where("id",$request->id)->lockForUpdate()->first();
-      if($model_query->ref_id == null &&  $model_query->requested_by != $this->admin_id){
+
+      $super = in_array($this->role,["Super Admin","User"]);
+      if($model_query->ref_id == null &&  $model_query->requested_by != $this->admin_id && !$super){
         throw new \Exception("Hanya yang membuat transaksi yang boleh melakukan konfirmasi data",1);
       }
 
