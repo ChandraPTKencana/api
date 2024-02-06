@@ -32,7 +32,7 @@ class HrmRevisiLokasiController extends Controller
 
   public function index(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     //======================================================================================================
     // Pembatasan Data hanya memerlukan limit dan offset
@@ -173,7 +173,7 @@ class HrmRevisiLokasiController extends Controller
       $model_query = $model_query->where("id","!=",$request->exclude);
     }
 
-    if($request->opt=="from" && $this->role=='ClientPabrik'){
+    if($request->opt=="from" && ($this->role=='ClientPabrik' || $this->role=='KTU')){
       $model_query = $model_query->whereIn("id",$this->admin->the_user->hrm_revisi_lokasis());
     }
   

@@ -32,7 +32,7 @@ class ItemController extends Controller
 
   public function index(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     //======================================================================================================
     // Pembatasan Data hanya memerlukan limit dan offset
@@ -196,7 +196,7 @@ class ItemController extends Controller
 
   public function store(ItemRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     $name = $request->name;
 
@@ -239,7 +239,7 @@ class ItemController extends Controller
 
   public function update(ItemRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     DB::beginTransaction();
     try {
@@ -275,7 +275,7 @@ class ItemController extends Controller
 
   public function delete(ItemRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     DB::beginTransaction();
 

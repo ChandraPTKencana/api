@@ -36,7 +36,7 @@ class TransactionController extends Controller
 
   public function index(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     //======================================================================================================
     // Pembatasan Data hanya memerlukan limit dan offset
@@ -222,7 +222,7 @@ class TransactionController extends Controller
     //   $model_query = $model_query->where("role", 'like', '%' . $request->role . '%');
     // }
 
-    if($this->role=='ClientPabrik'){
+    if($this->role=='ClientPabrik' || $this->role=='KTU'){
       $model_query = $model_query->whereIn("hrm_revisi_lokasi_id",$this->admin->the_user->hrm_revisi_lokasis());
     }
     $model_query = $model_query->where(function ($q){
@@ -243,7 +243,7 @@ class TransactionController extends Controller
 
 
     $model_query_notify = Transaction::where("type","transfer")->whereNull("confirmed_by")->whereNotNull("ref_id")->get();
-    if($this->role=='ClientPabrik'){
+    if($this->role=='ClientPabrik' || $this->role=='KTU'){
       $model_query_notify = $model_query_notify->whereIn("hrm_revisi_lokasi_id",$this->admin->the_user->hrm_revisi_lokasis());
     }
 
@@ -256,7 +256,7 @@ class TransactionController extends Controller
 
   public function show(TransactionRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     $model_query = Transaction::with(['warehouse','warehouse_source','warehouse_target','requester', 'confirmer',
     'details'=>function($q){
@@ -274,7 +274,7 @@ class TransactionController extends Controller
     //   ], 400);
     // }
     
-    if($this->role=='ClientPabrik')
+    if($this->role=='ClientPabrik' || $this->role=='KTU')
     MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);
 
     // if($model_query->ref_id!=null){
@@ -348,7 +348,7 @@ class TransactionController extends Controller
 
   public function store(TransactionRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     $details_in = json_decode($request->details, true);
     $this->validateItems($details_in);
@@ -358,7 +358,7 @@ class TransactionController extends Controller
       $model_query                         = new Transaction();
       
       $warehouse_id = $request->warehouse_id; // lokasi yang di kelola
-      if($this->role=='ClientPabrik')
+      if($this->role=='ClientPabrik' || $this->role=='KTU')
       MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$request->warehouse_id);
       
       $model_query->hrm_revisi_lokasi_id        = $warehouse_id;
@@ -474,7 +474,7 @@ class TransactionController extends Controller
 
   public function update(TransactionRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
     
     $details_in = json_decode($request->details, true);
     $this->validateItems($details_in);
@@ -496,7 +496,7 @@ class TransactionController extends Controller
       }
 
       $warehouse_id = $request->warehouse_id;
-      if($this->role=='ClientPabrik')
+      if($this->role=='ClientPabrik' || $this->role=='KTU')
       $warehouse_id = MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);
   
       // $dt_before = $this->getLastDataConfirmed($warehouse_id,$request->item_id);
@@ -761,7 +761,7 @@ class TransactionController extends Controller
 
   public function delete(TransactionRequest $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     DB::beginTransaction();
 
@@ -785,7 +785,7 @@ class TransactionController extends Controller
         throw new \Exception("Hapus data ditolak. Data sudah dikonfirmasi",1);
       }
       
-      if($this->role=='ClientPabrik')
+      if($this->role=='ClientPabrik' || $this->role=='KTU')
       MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);
   
 
@@ -819,7 +819,7 @@ class TransactionController extends Controller
 
   public function request_transactions(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     //======================================================================================================
     // Pembatasan Data hanya memerlukan limit dan offset
@@ -1005,7 +1005,7 @@ class TransactionController extends Controller
     //   $model_query = $model_query->where("role", 'like', '%' . $request->role . '%');
     // }
 
-    if($this->role=='ClientPabrik')
+    if($this->role=='ClientPabrik' || $this->role=='KTU')
     $warehouse_ids = $this->admin->the_user->hrm_revisi_lokasis();
     else
     $warehouse_ids = \App\Models\HrmRevisiLokasi::get()->pluck("id")->toArray();
@@ -1034,11 +1034,11 @@ class TransactionController extends Controller
 
   public function summary_transactions(Request $request)
   {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     $warehouses = new HrmRevisiLokasi();
 
-    if($this->role=='ClientPabrik'){
+    if($this->role=='ClientPabrik' || $this->role=='KTU'){
       $warehouse_ids = $this->admin->the_user->hrm_revisi_lokasis();
       $warehouses = $warehouses->whereIn("id",$warehouse_ids);
     }
@@ -1130,7 +1130,7 @@ class TransactionController extends Controller
   }
 
   public function summary_detail_transactions(Request $request) {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
     
     $rules = [
       'item_id' => 'required|exists:\App\Models\Stok\Item,id',
@@ -1154,7 +1154,7 @@ class TransactionController extends Controller
     $item_id = $request->item_id;
     $warehouse_id = $request->warehouse_id;
 
-    if($this->role=='ClientPabrik')
+    if($this->role=='ClientPabrik' || $this->role=='KTU')
     MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$warehouse_id);
 
     $model_query = TransactionDetail::selectRaw("st_transaction_details.*,st_transactions.type,st_transactions.input_at,st_transactions.updated_at,st_transactions.confirmed_at")->where('st_item_id',$item_id)
@@ -1221,7 +1221,7 @@ class TransactionController extends Controller
   }
 
   public function confirm_transaction(Request $request) {
-    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik']);
+    MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
     
     $rules = [
       'id' => 'required|exists:\App\Models\Stok\Transaction,id',
@@ -1268,7 +1268,7 @@ class TransactionController extends Controller
         throw new \Exception("Konfirmasi ditolak. Data sudah di konfirmasi.",1);
       }
 
-      if($this->role=='ClientPabrik')
+      if($this->role=='ClientPabrik' || $this->role=='KTU')
       MyAdmin::checkReturnOrFailLocation($this->admin->the_user,$model_query->hrm_revisi_lokasi_id);
   
       $type = $model_query->type;
