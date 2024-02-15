@@ -37,6 +37,7 @@ class ItemRequest extends FormRequest
         if (request()->isMethod('post') || request()->isMethod('put')) {
             $rules['value'] = 'required|numeric';
             $rules['unit_id'] = 'required|exists:App\Models\Stok\Unit,id';
+            $rules['photo'] = 'nullable|image|mimes:jpeg,png|max:2048';
         }
         return $rules;
     }
@@ -56,6 +57,10 @@ class ItemRequest extends FormRequest
 
             'unit_id.required' => 'Unit harus di pilih',
             'unit_id.exists' => 'Unit tidak tersedia',
+
+            'photo.image' => 'Jenis Foto Harus Berupa Gambar',
+            'photo.mimes' => 'Tipe Foto harus jpeg ataupun png',
+            'photo.max' => 'Foto Maksimal 2048kb',
         ];
     }
 }

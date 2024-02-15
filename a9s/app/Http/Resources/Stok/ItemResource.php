@@ -24,6 +24,8 @@ class ItemResource extends JsonResource
             'unit'                => new UnitResource($this->whenLoaded('unit')),
             'created_at'          => $this->created_at,
             'updated_at'          => $this->updated_at,
+            'photo'               => $this->photo ? ("/ho/images/stok/item/".$this->photo) : null,
+            // 'photo'               => $this->photo ? ("http://127.0.0.1/ho/images/stok/item/".$this->photo) : null,
             'updator'             => new IsUserResource($this->whenLoaded('updator')),
             'creator'             => new IsUserResource($this->whenLoaded('creator')),
         ];

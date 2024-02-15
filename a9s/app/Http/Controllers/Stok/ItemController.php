@@ -199,9 +199,27 @@ class ItemController extends Controller
     MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
     $name = $request->name;
+    $photo_preview = $request->photo_preview;
 
+    $filePath = "ho/images/stok/item/";
+    $file_name = null;
+    $location = null;
+
+    $new_image = $request->file('photo');
+    
     DB::beginTransaction();
     try {
+
+      if ($new_image != null) {
+        $date = new \DateTime();
+        $timestamp = $date->format("Y-m-d H:i:s.v");
+        $ext = $new_image->extension();
+        $file_name = md5(preg_replace('/( |-|:)/', '', $timestamp)) . '.' . $ext;
+        $location = $file_name;
+
+        ini_set('memory_limit', '256M');
+        $new_image->move(files_path($filePath), $file_name);
+      }
 
       $model_query             = new Item();
       $model_query->name       = $request->name;
@@ -212,6 +230,7 @@ class ItemController extends Controller
       $model_query->created_by = $this->admin_id;
       $model_query->updated_at = date("Y-m-d H:i:s");
       $model_query->updated_by = $this->admin_id;
+      $model_query->photo = $location;
       $model_query->save();
 
       DB::commit();
@@ -220,6 +239,11 @@ class ItemController extends Controller
       ], 200);
     } catch (\Exception $e) {
       DB::rollback();
+
+      if ($new_image != null && File::exists(files_path($filePath.$location)) && $location != null) {
+        unlink(files_path($filePath.$location));
+      }
+
       return response()->json([
         "message" => $e->getMessage(),
       ], 400);
@@ -241,23 +265,63 @@ class ItemController extends Controller
   {
     MyAdmin::checkRole($this->role, ['Super Admin','User','ClientPabrik','KTU']);
 
+    $photo_preview = $request->photo_preview;
+
+    $filePath = "ho/images/stok/item/";
+    $file_name = null;
+    $location = null;
+
+    $new_image = $request->file('photo');
+
     DB::beginTransaction();
     try {
       $model_query             = Item::find($request->id);
+
+      $location = $model_query->photo;
+      if ($new_image != null) {
+        $date = new \DateTime();
+        $timestamp = $date->format("Y-m-d H:i:s.v");
+        $ext = $new_image->extension();
+        $file_name = md5(preg_replace('/( |-|:)/', '', $timestamp)) . '.' . $ext;
+        $location = $file_name;
+
+        ini_set('memory_limit', '256M');
+        $new_image->move(files_path($filePath), $file_name);
+      }
+
+      if ($new_image == null && $photo_preview == null) {
+        $location = null;
+      }
+
+
+      if ($photo_preview == null) {
+        if (File::exists(files_path($filePath.$model_query->photo)) && $model_query->photo != null) {
+          if(!unlink(files_path($filePath.$model_query->photo)))
+          throw new \Exception("Gagal",1);
+        }
+      }
+
       $model_query->name       = $request->name;
       $model_query->value      = MyLib::emptyStrToNull($request->value);
       $model_query->note       = MyLib::emptyStrToNull($request->note);
       $model_query->st_unit_id = MyLib::emptyStrToNull($request->unit_id);
       $model_query->updated_at = date("Y-m-d H:i:s");
       $model_query->updated_by = $this->admin_id;
+      $model_query->photo = $location;
       $model_query->save();
 
       DB::commit();
       return response()->json([
         "message" => "Proses ubah data berhasil",
       ], 200);
+
     } catch (\Exception $e) {
       DB::rollback();
+
+      if ($new_image != null && File::exists(files_path($filePath.$location)) && $location != null) {
+        unlink(files_path($filePath.$location));
+      }
+      
       if ($e->getCode() == 1) {
         return response()->json([
           "message" => $e->getMessage(),
