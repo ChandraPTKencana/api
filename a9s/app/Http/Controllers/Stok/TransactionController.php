@@ -75,6 +75,8 @@ class TransactionController extends Controller
     //======================================================================================================
     // Model Sorting | Example $request->sort = "username:desc,role:desc";
     //======================================================================================================
+    
+    $model_query = $model_query->orderByRaw('CASE WHEN confirmed_at IS NULL THEN 0 ELSE 1 END, confirmed_at DESC');
 
     if ($request->sort) {
       $sort_lists = [];
@@ -116,7 +118,6 @@ class TransactionController extends Controller
       //   $model_query = $model_query->orderBy("role", $sort_lists["role"]);
       // }
     } else {
-      $model_query = $model_query->orderBy("confirmed_at","asc");
       $model_query = $model_query->orderBy('updated_at', 'DESC');
     }
     //======================================================================================================
