@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\IsUser;
 use App\Helpers\MyLib;
 use App\Helpers\MyAdmin;
+use App\Models\HrmRevisiLokasi;
 use Illuminate\Support\Facades\Log;
 use DB;
 use File;
@@ -101,6 +102,7 @@ class UserAccount extends Controller
         "username" => $admin->the_user->username,
         "fullname" => $admin->the_user->nama_user,
         "role" => $admin->the_user->hak_akses,
+        "locs"=>HrmRevisiLokasi::whereRaw("id in (".$admin->the_user->loc.")")->get()
         // // "scope"=>($p_user->role && count($p_user->role->permissions)>0) ? $p_user->role->permissions->pluck('name') : [],
         // "scopes" => $p_user->listPermissions()
       ],

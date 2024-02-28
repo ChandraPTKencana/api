@@ -116,7 +116,7 @@ class TransactionController extends Controller
       //   $model_query = $model_query->orderBy("role", $sort_lists["role"]);
       // }
     } else {
-      $model_query = $model_query->orderBy("confirmed_by","asc");
+      $model_query = $model_query->orderBy("confirmed_at","asc");
       $model_query = $model_query->orderBy('updated_at', 'DESC');
     }
     //======================================================================================================
