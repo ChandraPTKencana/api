@@ -20,6 +20,7 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Image;
 use File;
+use App\Http\Resources\IsUserResource;
 
 class TransactionController extends Controller
 {
@@ -1355,6 +1356,11 @@ class TransactionController extends Controller
       DB::commit();
       return response()->json([
         "message" => "Proses ubah data berhasil",
+        "data"=>[
+          "input_at"=>$dates[0],
+          "confirmed_by"=>$this->admin_id,
+          "confirmer"=>new IsUserResource($this->admin->the_user)
+        ]
       ], 200);
     } catch (\Exception $e) {
       DB::rollback();
