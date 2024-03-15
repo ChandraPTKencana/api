@@ -700,12 +700,13 @@ class TransactionController extends Controller
              
 
                 TransactionDetail::where("st_transaction_id", $model_query->id)
-                    ->where("ordinal", $v["key"])->update([
+                    ->where("ordinal", $v["key"])->where("p_change",false)->update([
                         "ordinal"=>$v["ordinal"],
                         "st_item_id" => $v["item_id"],
                         "qty_in" => $v["qty_in"],
                         "qty_out" => $v["qty_out"],
                         "note" => $v["note"],
+                        "p_change"=> true
                         // 'updated_at' => date('Y-m-d H:i:s'),
                         // 'updated_by' => $auth_id,
                     ]);
@@ -727,6 +728,7 @@ class TransactionController extends Controller
                 'qty_in'            => $v["qty_in"],
                 'qty_out'           => $v['qty_out'],
                 'note'              => $v['note'],
+                "p_change"          => true
                 // 'created_at'        => date('Y-m-d H:i:s'),
                 // 'created_by'        => $auth_id,
                 // 'updated_at'        => date('Y-m-d H:i:s'),
@@ -737,7 +739,7 @@ class TransactionController extends Controller
     }
 
     $model_query->save();
-
+    TransactionDetail::where('st_transaction_id',$model_query->id)->update(["p_change"=>false]);
 
       DB::commit();
       return response()->json([
@@ -750,11 +752,11 @@ class TransactionController extends Controller
           "message" => $e->getMessage(),
         ], 400);
       }
-      // return response()->json([
-      //   "getCode" => $e->getCode(),
-      //   "line" => $e->getLine(),
-      //   "message" => $e->getMessage(),
-      // ], 400);
+      return response()->json([
+        "getCode" => $e->getCode(),
+        "line" => $e->getLine(),
+        "message" => $e->getMessage(),
+      ], 400);
       return response()->json([
         "message" => "Proses ubah data gagal"
       ], 400);
