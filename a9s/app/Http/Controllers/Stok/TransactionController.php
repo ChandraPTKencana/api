@@ -1206,10 +1206,11 @@ class TransactionController extends Controller
       ->joinSub($subquery,'dtfb',function ($join){
         $join->on('st_transaction_details.st_item_id', '=', 'dtfb.st_item_id');
       })
-      ->join("st_transactions",function ($join) {
+      ->join("st_transactions",function ($join) use ($hrm_revisi_lokasi_id) {
         $join->on("st_transactions.input_at","dtfb.max_input_at");
         $join->on("st_transactions.id","st_transaction_details.st_transaction_id");
         $join->orderBy("st_transactions.input_ordinal","desc");
+        $join->where("hrm_revisi_lokasi_id",$hrm_revisi_lokasi_id);
       })
       ->whereNotNull("st_transaction_details.qty_reminder")
       ->lockForUpdate()
