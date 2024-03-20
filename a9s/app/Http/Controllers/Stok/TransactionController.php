@@ -457,9 +457,9 @@ class TransactionController extends Controller
       ], 200);
     } catch (\Exception $e) {
       DB::rollback();
-      return response()->json([
-        "message" => $e->getMessage(),
-      ], 400);
+      // return response()->json([
+      //   "message" => $e->getMessage(),
+      // ], 400);
       if ($e->getCode() == 1) {
         return response()->json([
           "message" => $e->getMessage(),
@@ -1066,27 +1066,40 @@ class TransactionController extends Controller
     $warehouses = $warehouses->get(); 
     $items = Item::get();
     $items_id = $items->pluck("id");
-    $subquery = TransactionDetail::selectRaw("distinct st_item_id,st_transactions.hrm_revisi_lokasi_id , max(st_transactions.input_at) as max_input_at")
-    ->whereIn("st_item_id",$items_id)
-    ->join("st_transactions",function ($q){
-      $q->on('st_transactions.id',"=","st_transaction_details.st_transaction_id");
-    })
-    ->whereNotNull("confirmed_by")
-    ->where("st_transactions.input_at","<=",$dates[0])
-    // ->orderBy("st_transactions.input_at","desc")
-    // ->orderBy("ref_id","desc")
-    ->groupBy(["st_item_id","hrm_revisi_lokasi_id"]);
+    // $subquery = TransactionDetail::selectRaw("distinct st_item_id,st_transactions.hrm_revisi_lokasi_id , max(st_transactions.input_at) as max_input_at")
+    // ->whereIn("st_item_id",$items_id)
+    // ->join("st_transactions",function ($q){
+    //   $q->on('st_transactions.id',"=","st_transaction_details.st_transaction_id");
+    // })
+    // ->whereNotNull("confirmed_by")
+    // ->where("st_transactions.input_at","<=",$dates[0])
+    // // ->orderBy("st_transactions.input_at","desc")
+    // // ->orderBy("ref_id","desc")
+    // ->groupBy(["st_item_id","hrm_revisi_lokasi_id"]);
 
-    $model_query =TransactionDetail::selectRaw("st_transaction_id,st_transaction_details.st_item_id, qty_reminder, st_transactions.hrm_revisi_lokasi_id,st_transactions.updated_at,st_transactions.input_at")
-    ->joinSub($subquery,'dtfb',function ($join){
-      $join->on('st_transaction_details.st_item_id', '=', 'dtfb.st_item_id');
-    })
-    ->join("st_transactions",function ($join) {
-      $join->on("st_transactions.input_at","dtfb.max_input_at");
-      $join->on("st_transactions.id","st_transaction_details.st_transaction_id");
-      $join->orderBy("st_transactions.input_ordinal","desc");
+    // $model_query =TransactionDetail::selectRaw("st_transaction_id,st_transaction_details.st_item_id, qty_reminder, st_transactions.hrm_revisi_lokasi_id,st_transactions.updated_at,st_transactions.input_at")
+    // ->joinSub($subquery,'dtfb',function ($join){
+    //   $join->on('st_transaction_details.st_item_id', '=', 'dtfb.st_item_id');
+    // })
+    // ->join("st_transactions",function ($join) {
+    //   $join->on("st_transactions.input_at","dtfb.max_input_at");
+    //   $join->on("st_transactions.id","st_transaction_details.st_transaction_id");
+    //   $join->orderBy("st_transactions.input_ordinal","desc");
+    // })
+    // ->whereNotNull("st_transaction_details.qty_reminder")
+    // ->lockForUpdate()
+    // ->get();
+
+    $model_query =TransactionDetail::selectRaw("st_transaction_details.st_item_id, sum( coalesce(qty_in, 0) - coalesce(qty_out, 0)) as qty_reminder, st_transactions.hrm_revisi_lokasi_id")
+    ->from('st_transactions')
+    ->join('st_transaction_details',function ($join)use($items_id){
+      $join->on('st_transactions.id', '=', 'st_transaction_details.st_transaction_id');
+      $join->whereIn("st_transaction_details.st_item_id",$items_id);
     })
     ->whereNotNull("st_transaction_details.qty_reminder")
+    ->whereNotNull("confirmed_by")
+    ->where("st_transactions.input_at","<=",$dates[0])
+    ->groupBy(["hrm_revisi_lokasi_id","st_item_id"])
     ->lockForUpdate()
     ->get();
 
