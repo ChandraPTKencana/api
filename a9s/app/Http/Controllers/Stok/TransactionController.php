@@ -1203,7 +1203,7 @@ class TransactionController extends Controller
 
   public function getLastDataConfirmed($items_id,$hrm_revisi_lokasi_id,$date_limit=""){
     
-    $subquery = TransactionDetail::selectRaw("distinct st_item_id,max(st_transactions.input_at) as max_input_at")
+    $subquery = TransactionDetail::selectRaw("distinct st_item_id,max(concat(st_transactions.input_at,' ',st_transactions.confirmed_at)) as max_input_confirm_at")
     ->whereIn("st_item_id",$items_id)
     ->join("st_transactions",function ($q)use($hrm_revisi_lokasi_id,$date_limit){
       $q->on('st_transactions.id',"=","st_transaction_details.st_transaction_id");
@@ -1220,7 +1220,8 @@ class TransactionController extends Controller
         $join->on('st_transaction_details.st_item_id', '=', 'dtfb.st_item_id');
       })
       ->join("st_transactions",function ($join) use ($hrm_revisi_lokasi_id) {
-        $join->on("st_transactions.input_at","dtfb.max_input_at");
+        $join->on("st_transactions.input_at",DB::raw("substring(`dtfb`.`max_input_confirm_at`from 1 for 10)"));
+        $join->on("st_transactions.confirmed_at",DB::raw("substring(`dtfb`.`max_input_confirm_at`from 12 for 19)"));
         $join->on("st_transactions.id","st_transaction_details.st_transaction_id");
         $join->orderBy("st_transactions.input_ordinal","desc");
         $join->where("hrm_revisi_lokasi_id",$hrm_revisi_lokasi_id);
@@ -1360,7 +1361,7 @@ class TransactionController extends Controller
       // return response()->json([
       //   "xmessage" => $toGetMaxOrdinal,
       // ], 400);
-      $model_query->confirmed_at               = date("Y-m-d H:i:s");
+      $model_query->confirmed_at               = MyLib::timestampMs();
       $model_query->confirmed_by               = $this->admin_id;
       $model_query->input_at                   = $dates[0];
       if($toGetMaxOrdinal)
@@ -1405,6 +1406,7 @@ class TransactionController extends Controller
     ->whereIn("st_transaction_id",function ($q)use($hrm_revisi_lokasi_id,$date_limit){
       $q->select("id")->from("st_transactions")->where("input_at",">",$date_limit);
       $q->where("hrm_revisi_lokasi_id",$hrm_revisi_lokasi_id);
+      $q->whereNotNull("confirmed_at");
     })->update([
       "qty_reminder"=>DB::raw("`qty_reminder`+".($qty))
     ]);

@@ -172,6 +172,11 @@ class MyLib
     return $data['thumbnail_url'] ?? "";
   }
 
+  public static function timestampMs() {
+    $time = microtime(true);
+    $mSecs = sprintf('%03d', ($time - floor($time)) * 1000);
+    return date("Y-m-d H:i:s").".".$mSecs;
+  }
 
   public static function getMillis()
   {
