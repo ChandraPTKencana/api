@@ -1064,7 +1064,7 @@ class TransactionController extends Controller
     // $date_to = $date_to->format('Y-m-d')."T00:00:00.000Z";
 
     $warehouses = $warehouses->get(); 
-    $items = Item::get();
+    $items = Item::orderBy('name','asc')->get();
     $items_id = $items->pluck("id");
     // $subquery = TransactionDetail::selectRaw("distinct st_item_id,st_transactions.hrm_revisi_lokasi_id , max(st_transactions.input_at) as max_input_at")
     // ->whereIn("st_item_id",$items_id)
