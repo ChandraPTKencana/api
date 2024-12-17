@@ -194,7 +194,7 @@ class UserController extends Controller
 
     $model_query=$model_query->with(['permission_group_users'=>function ($q){
       $q->with('permission_group');      
-    }])->where('status','active');
+    }])->where('status','aktif');
 
     $model_query = $model_query->get();
 
