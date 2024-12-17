@@ -63,7 +63,21 @@ Route::prefix("stok/api")->group(function(){
     Route::get('/summary_detail_transactions', [\App\Http\Controllers\Stok\TransactionController::class, 'summary_detail_transactions']);
 
     Route::get('/hrm_revisi_lokasis', [\App\Http\Controllers\HrmRevisiLokasiController::class, 'index']);
+
+    Route::get('/users', [\App\Http\Controllers\User\UserController::class, 'index']);
+    Route::get('/user', [\App\Http\Controllers\User\UserController::class, 'show']);
+    Route::post('/user', [\App\Http\Controllers\User\UserController::class, 'store']);
+    Route::put('/user', [\App\Http\Controllers\User\UserController::class, 'update']);
+    Route::delete('/user', [\App\Http\Controllers\User\UserController::class, 'delete']);
     
+
+    Route::get('/permission_lists', [\App\Http\Controllers\Permission\PermissionListController::class, 'index']);
+
+    Route::get('/permission_groups', [\App\Http\Controllers\Permission\PermissionGroupController::class, 'index']);
+    Route::get('/permission_group', [\App\Http\Controllers\Permission\PermissionGroupController::class, 'show']);
+    Route::post('/permission_group', [\App\Http\Controllers\Permission\PermissionGroupController::class, 'store']);
+    Route::put('/permission_group', [\App\Http\Controllers\Permission\PermissionGroupController::class, 'update']);
+    Route::delete('/permission_group', [\App\Http\Controllers\Permission\PermissionGroupController::class, 'delete']);
     // Route::get('/users', [\App\Http\Controllers\Internal\User\UserController::class, 'index']);
     // Route::get('/user', [\App\Http\Controllers\Internal\User\UserController::class, 'show']);
     // Route::post('/user', [\App\Http\Controllers\Internal\User\UserController::class, 'store']);

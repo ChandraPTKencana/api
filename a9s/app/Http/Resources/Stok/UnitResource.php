@@ -3,7 +3,7 @@
 namespace App\Http\Resources\Stok;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\IsUserResource;
+use App\Http\Resources\MySql\IsUserResource;
 
 class UnitResource extends JsonResource
 {
@@ -22,8 +22,8 @@ class UnitResource extends JsonResource
 
             'created_at'          => $this->created_at,
             'updated_at'          => $this->updated_at,
-            'updator'             => new IsUserResource($this->whenLoaded('updator')),
-            'creator'             => new IsUserResource($this->whenLoaded('creator')),
+            'created_by'          => new IsUserResource($this->whenLoaded('created_by')),
+            'updated_by'          => new IsUserResource($this->whenLoaded('updated_by')),
         ];
     }
 }

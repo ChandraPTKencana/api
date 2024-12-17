@@ -32,13 +32,13 @@ class Transaction extends Model
         return $this->hasMany(TransactionDetail::class, 'st_transaction_id', 'id');
     }
 
-    public function requester()
+    public function requested_by()
     {
-        return $this->hasOne(\App\Models\IsUser::class, 'id_user', "requested_by");
+        return $this->hasOne(\App\Models\IsUser::class, 'id_user', "requested_user");
     }
 
-    public function confirmer()
+    public function confirmed_by()
     {
-        return $this->hasOne(\App\Models\IsUser::class, 'id_user', "confirmed_by");
+        return $this->hasOne(\App\Models\IsUser::class, 'id_user', "confirmed_user");
     }
 }

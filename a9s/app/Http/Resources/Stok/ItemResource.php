@@ -3,7 +3,7 @@
 namespace App\Http\Resources\Stok;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\IsUserResource;
+use App\Http\Resources\MySql\IsUserResource;
 
 class ItemResource extends JsonResource
 {
@@ -26,8 +26,15 @@ class ItemResource extends JsonResource
             'updated_at'          => $this->updated_at,
             'photo'               => $this->photo ? ("/ho/images/stok/item/".$this->photo) : null,
             // 'photo'               => $this->photo ? ("http://127.0.0.1/ho/images/stok/item/".$this->photo) : null,
-            'updator'             => new IsUserResource($this->whenLoaded('updator')),
-            'creator'             => new IsUserResource($this->whenLoaded('creator')),
+            // 'updator'             => new IsUserResource($this->whenLoaded('updator')),
+            // 'creator'             => new IsUserResource($this->whenLoaded('creator')),
+
+            'created_user'      => $this->created_user ?? "",
+            'created_by'        => new IsUserResource($this->whenLoaded('created_by')),
+
+            'updated_user'      => $this->updated_user ?? "",
+            'updated_by'        => new IsUserResource($this->whenLoaded('updated_by')),
+
         ];
     }
 }

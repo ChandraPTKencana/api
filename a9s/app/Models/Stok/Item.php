@@ -16,13 +16,29 @@ class Item extends Model
         return $this->belongsTo(Unit::class, "st_unit_id", 'id');
     }
 
-    public function updator()
+    // public function updator()
+    // {
+    //     return $this->hasOne(\App\Models\IsUser::class, 'id_user', "updated_by");
+    // }
+
+    // public function creator()
+    // {
+    //     return $this->hasOne(\App\Models\IsUser::class, 'id_user', "created_by");
+    // }
+
+    public function created_by()
     {
-        return $this->hasOne(\App\Models\IsUser::class, 'id_user', "updated_by");
+        return $this->hasOne(\App\Models\MySql\IsUser::class, 'id_user', "created_user");
     }
 
-    public function creator()
+    public function updated_by()
     {
-        return $this->hasOne(\App\Models\IsUser::class, 'id_user', "created_by");
+        return $this->hasOne(\App\Models\MySql\IsUser::class, 'id_user', "updated_user");
     }
+
+    // public function deleted_by()
+    // {
+    //     return $this->hasOne(\App\Models\MySql\IsUser::class, 'id', "deleted_user");
+    // }
+
 }

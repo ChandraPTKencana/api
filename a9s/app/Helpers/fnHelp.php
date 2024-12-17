@@ -101,3 +101,84 @@ if (!function_exists('mct')) {
         }
     }
 }
+
+
+if (!function_exists('getRealIpAddress')) {
+    function getRealIpAddress() {
+        $ipAddress = '';
+
+        // Check for shared internet/ISP IP
+        if (!empty($_SERVER['HTTP_CLIENT_IP']) && validate_ip($_SERVER['HTTP_CLIENT_IP'])) {
+            $ipAddress = $_SERVER['HTTP_CLIENT_IP'];
+        }
+
+        // Check for IPs passing through proxies
+        if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            // Check if multiple IPs exist in var
+            $iplist = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+            foreach ($iplist as $ip) {
+                if (validate_ip($ip)) {
+                    if ($ipAddress === '') {
+                        $ipAddress = $ip;
+                    } else {
+                        // If there is more than one IP, stop after the first IP is found
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!empty($_SERVER['HTTP_X_FORWARDED']) && validate_ip($_SERVER['HTTP_X_FORWARDED'])) {
+            $ipAddress = $_SERVER['HTTP_X_FORWARDED'];
+        }
+        if (!empty($_SERVER['HTTP_X_CLUSTER_CLIENT_IP']) && validate_ip($_SERVER['HTTP_X_CLUSTER_CLIENT_IP'])) {
+            $ipAddress = $_SERVER['HTTP_X_CLUSTER_CLIENT_IP'];
+        }
+        if (!empty($_SERVER['HTTP_FORWARDED_FOR']) && validate_ip($_SERVER['HTTP_FORWARDED_FOR'])) {
+            $ipAddress = $_SERVER['HTTP_FORWARDED_FOR'];
+        }
+        if (!empty($_SERVER['HTTP_FORWARDED']) && validate_ip($_SERVER['HTTP_FORWARDED'])) {
+            $ipAddress = $_SERVER['HTTP_FORWARDED'];
+        }
+
+        // Check for IPs passing through Fly proxy
+        if (!empty($_SERVER["HTTP_FLY_CLIENT_IP"]) && validate_ip($_SERVER["HTTP_FLY_CLIENT_IP"])) {
+            $ipAddress = $_SERVER["HTTP_FLY_CLIENT_IP"];
+        }
+
+        if($ipAddress=="" && !empty($_SERVER["REMOTE_ADDR"]) && validate_ip($_SERVER["REMOTE_ADDR"])){
+            $ipAddress = $_SERVER["REMOTE_ADDR"];
+        }
+
+        // Return validated IP
+        if (validate_ip($ipAddress)) {
+            return $ipAddress;
+        }
+
+        return 'UNKNOWN';
+    }
+}
+
+if (!function_exists('validate_ip')) {
+    function validate_ip($ip) {
+        if (strtolower($ip) === 'unknown') {
+            return false;
+        }
+
+        // Generate ipv4 network address
+        $ip = ip2long($ip);
+
+        // If the IP address is not valid, return false
+        if ($ip !== false && $ip !== -1) {
+            // Make sure the IP does not exceed the maximum for a ipv4 network address
+            $ip = sprintf('%u', $ip);
+            if ($ip <= 0 || $ip >= 0xffffffff) {
+                return false;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+}

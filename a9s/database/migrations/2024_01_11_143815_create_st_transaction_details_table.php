@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('st_transaction_details', function (Blueprint $table) {
             // $table->bigInteger("st_transaction_id");
+            $table->id();
             $table->foreignId('st_transaction_id')->references('id')->on('st_transactions')->onDelete('restrict')->onUpdate('cascade');
 
             $table->integer("ordinal");

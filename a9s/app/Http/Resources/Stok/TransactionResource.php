@@ -3,7 +3,7 @@
 namespace App\Http\Resources\Stok;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\IsUserResource;
+use App\Http\Resources\MySql\IsUserResource;
 
 class TransactionResource extends JsonResource
 {
@@ -22,14 +22,15 @@ class TransactionResource extends JsonResource
             'warehouse_source'  => new \App\Http\Resources\HrmRevisiLokasiResource($this->whenLoaded('warehouse_source')),
             'warehouse_target'  => new \App\Http\Resources\HrmRevisiLokasiResource($this->whenLoaded('warehouse_target')),
             'details'           => TransactionDetailResource::collection($this->whenLoaded('details')),
-            'note'              => $this->note,
+            'note'              => $this->note ?? "",
             'status'            => $this->status,
             'type'              => $this->type,
             'requested_at'      => $this->requested_at,
             'confirmed_at'      => $this->confirmed_at,
-            'requester'         => new IsUserResource($this->whenLoaded('requester')),
-            'confirmer'         => new IsUserResource($this->whenLoaded('confirmer')),
-            'confirmed_by'      => $this->confirmed_by,
+            'requested_by'      => new IsUserResource($this->whenLoaded('requested_by')),
+            'confirmed_by'      => new IsUserResource($this->whenLoaded('confirmed_by')),
+            'confirmed_user'    => $this->confirmed_user,
+            'requested_user'    => $this->requested_user,
             'updated_at'        => $this->updated_at,
             'input_at'          => $this->input_at,
             'input_ordinal'     => $this->input_ordinal,

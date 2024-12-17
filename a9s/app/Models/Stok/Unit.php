@@ -11,13 +11,13 @@ class Unit extends Model
 
     protected $table = 'st_units';  
 
-    public function updator()
+    public function updated_by()
     {
-        return $this->hasOne(\App\Models\IsUser::class, 'id_user', "updated_by");
+        return $this->hasOne(\App\Models\MySql\IsUser::class, 'id_user', "updated_user");
     }
 
-    public function creator()
+    public function created_by()
     {
-        return $this->hasOne(\App\Models\IsUser::class, 'id_user', "created_by");
+        return $this->hasOne(\App\Models\MySql\IsUser::class, 'id_user', "created_user");
     }
 }
