@@ -45,7 +45,7 @@ class UserController extends Controller
     // Pembatasan Data hanya memerlukan limit dan offset
     //======================================================================================================
 
-    $limit = 250; // Limit +> Much Data
+    $limit = 1000; // Limit +> Much Data
     if (isset($request->limit)) {
       if ($request->limit <= 250) {
         $limit = $request->limit;
@@ -194,7 +194,7 @@ class UserController extends Controller
 
     $model_query=$model_query->with(['permission_group_users'=>function ($q){
       $q->with('permission_group');      
-    }]);
+    }])->where('status','active');
 
     $model_query = $model_query->get();
 
