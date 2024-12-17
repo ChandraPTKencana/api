@@ -121,41 +121,39 @@ class RunPermit extends Command
 
 
 
-        // $re_lists = [
-        //     ["permit"=>'user.views', "to"=>['SUPER_ADMIN']],
-        //     ["permit"=>'user.view',"to"=>['SUPER_ADMIN']],
-        //     // ["permit"=>'user.create',"to"=>['SUPER_ADMIN']],
-        //     ["permit"=>'user.modify',"to"=>['SUPER_ADMIN']],
-        //     // ["permit"=>'user.remove',"to"=>['SUPER_ADMIN']],
-
-        //     ["permit"=>'permission_list.views', "to"=>['SUPER_ADMIN']],
-
-        //     ["permit"=>'permission_user.views', "to"=>['SUPER_ADMIN']],
-        //     ["permit"=>'permission_user.insert',"to"=>['SUPER_ADMIN']],
-        //     // ["permit"=>'permission_user.modify',"to"=>['SUPER_ADMIN']],
-        //     ["permit"=>'permission_user.remove',"to"=>['SUPER_ADMIN']],
-
-        //     ["permit"=>'permission_group.views', "to"=>['SUPER_ADMIN']],
-        //     ["permit"=>'permission_group.view',"to"=>['SUPER_ADMIN']],
-        //     ["permit"=>'permission_group.create',"to"=>['SUPER_ADMIN']],
-        //     ["permit"=>'permission_group.modify',"to"=>['SUPER_ADMIN']],
-
-        //     ["permit"=>'permission_group_detail.views', "to"=>['SUPER_ADMIN']],
-        //     ["permit"=>'permission_group_detail.insert',"to"=>['SUPER_ADMIN']],
-        //     // ["permit"=>'permission_group_detail.modify',"to"=>['SUPER_ADMIN']],
-        //     ["permit"=>'permission_group_detail.remove',"to"=>['SUPER_ADMIN']],
-
-        //     ["permit"=>'permission_group_user.views', "to"=>['SUPER_ADMIN']],
-        //     ["permit"=>'permission_group_user.insert',"to"=>['SUPER_ADMIN']],
-        //     // ["permit"=>'permission_group_user.modify',"to"=>['SUPER_ADMIN']],
-        //     ["permit"=>'permission_group_user.remove',"to"=>['SUPER_ADMIN']],
-
-        //     // ["permit"=>'trp_trx.absen.clear_valval1',"to"=>['SUPER_ADMIN','Logistic','SPVlogistik','MANAGER_LOGISTIC']],
-        //     // ["permit"=>'standby_trx.detail.decide_paid',"to"=>['SUPER_ADMIN','Logistic','SPVlogistik','MANAGER_LOGISTIC']],
-        //     // ["permit"=>'extra_money_trx.generate_pv',"to"=>['SUPER_ADMIN','PabrikTransport','PabrikMandor']],
-        // ];
-
         $re_lists = [
+            ["permit"=>'user.views', "to"=>['SUPER_ADMIN']],
+            ["permit"=>'user.view',"to"=>['SUPER_ADMIN']],
+            // ["permit"=>'user.create',"to"=>['SUPER_ADMIN']],
+            ["permit"=>'user.modify',"to"=>['SUPER_ADMIN']],
+            // ["permit"=>'user.remove',"to"=>['SUPER_ADMIN']],
+
+            ["permit"=>'permission_list.views', "to"=>['SUPER_ADMIN']],
+
+            ["permit"=>'permission_user.views', "to"=>['SUPER_ADMIN']],
+            ["permit"=>'permission_user.insert',"to"=>['SUPER_ADMIN']],
+            // ["permit"=>'permission_user.modify',"to"=>['SUPER_ADMIN']],
+            ["permit"=>'permission_user.remove',"to"=>['SUPER_ADMIN']],
+
+            ["permit"=>'permission_group.views', "to"=>['SUPER_ADMIN']],
+            ["permit"=>'permission_group.view',"to"=>['SUPER_ADMIN']],
+            ["permit"=>'permission_group.create',"to"=>['SUPER_ADMIN']],
+            ["permit"=>'permission_group.modify',"to"=>['SUPER_ADMIN']],
+
+            ["permit"=>'permission_group_detail.views', "to"=>['SUPER_ADMIN']],
+            ["permit"=>'permission_group_detail.insert',"to"=>['SUPER_ADMIN']],
+            // ["permit"=>'permission_group_detail.modify',"to"=>['SUPER_ADMIN']],
+            ["permit"=>'permission_group_detail.remove',"to"=>['SUPER_ADMIN']],
+
+            ["permit"=>'permission_group_user.views', "to"=>['SUPER_ADMIN']],
+            ["permit"=>'permission_group_user.insert',"to"=>['SUPER_ADMIN']],
+            // ["permit"=>'permission_group_user.modify',"to"=>['SUPER_ADMIN']],
+            ["permit"=>'permission_group_user.remove',"to"=>['SUPER_ADMIN']],
+
+            // ["permit"=>'trp_trx.absen.clear_valval1',"to"=>['SUPER_ADMIN','Logistic','SPVlogistik','MANAGER_LOGISTIC']],
+            // ["permit"=>'standby_trx.detail.decide_paid',"to"=>['SUPER_ADMIN','Logistic','SPVlogistik','MANAGER_LOGISTIC']],
+            // ["permit"=>'extra_money_trx.generate_pv',"to"=>['SUPER_ADMIN','PabrikTransport','PabrikMandor']],
+        
             ["permit"=>'item.views', "to"=>['SUPER_ADMIN']],
             ["permit"=>'item.view',"to"=>['SUPER_ADMIN']],
             ["permit"=>'item.create',"to"=>['SUPER_ADMIN']],
@@ -181,8 +179,6 @@ class RunPermit extends Command
             ["permit"=>'transaction.detail.modify',"to"=>['SUPER_ADMIN']],
             ["permit"=>'transaction.detail.remove',"to"=>['SUPER_ADMIN']],
         ];
-        
-
 
         foreach ($re_lists as $k => $v) {
 
