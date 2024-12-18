@@ -1442,7 +1442,7 @@ class TransactionController extends Controller
         }
 
         //recalculate qty reminder
-        // $this->recalculateQtyReminder($v->st_item_id,$model_query->hrm_revisi_lokasi_id,$model_query->id,$v->qty_in - $v->qty_out);
+        $this->recalculateQtyReminder($v->st_item_id,$model_query->hrm_revisi_lokasi_id,$model_query->id,$v->qty_in - $v->qty_out);
       }
 
     
