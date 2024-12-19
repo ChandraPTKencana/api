@@ -90,4 +90,11 @@ class IsUser extends Authenticatable
         return array_merge($group_permissions,$permissions);
     }
 
+    public function hrm_revisi_lokasis()
+    {
+        $locs=explode(",",$this->loc);
+        return $this->from("hrm_revisi_lokasi")->select('*')->whereIn("id",$locs)->get()->pluck("id")->toArray();
+        // return $this->belongsTo(HrmRevisiLokasi::class, 'loc', 'id');
+    }
+
 }
