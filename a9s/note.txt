@@ -1,0 +1,12 @@
+/opt/alt/php81/usr/bin/php artisan migrate
+
+/opt/alt/php81/usr/bin/php artisan route:clear
+/opt/alt/php81/usr/bin/php artisan route:cache
+
+/opt/alt/php81/usr/bin/php artisan optimize:clear
+
+untuk mengulang load Helpers 
+file location di composer.json  di ubah ke tmpt yg salah kemudian jalankan
+/opt/alt/php81/usr/bin/php /opt/cpanel/composer/bin/composer dump-autoload
+kemudian kembalikan yang benar kemudian jalankan
+/opt/alt/php81/usr/bin/php /opt/cpanel/composer/bin/composer dump-autoload

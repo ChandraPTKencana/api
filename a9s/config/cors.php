@@ -21,7 +21,7 @@ return [
 
     // 'allowed_origins' => ['*'],
     // 'allowed_origins' => ['https://genkagromas.com','http://127.0.0.1:8010','http://127.0.0.1:8020','http://192.168.1.122:8020'],
-    'allowed_origins' => ['https://genkagromas.com'],
+    'allowed_origins' => ['https://genkagromas.com','http://localhost:3000','http://localhost:3001'],
 
     'allowed_origins_patterns' => [],
 
